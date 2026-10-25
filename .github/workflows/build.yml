@@ -32,9 +32,19 @@ jobs:
         shell: bash
         run: echo "${{ secrets.LABLOUD_SECRETS_B64 }}" | base64 --decode > Source/Secrets.h
       - name: Configurar
-        run: cmake -B build -G "Visual Studio 17 2022" -A x64
+        shell: bash
+        run: |
+          set +e
+          cmake -B build -A x64 > cfg.log 2>&1; rc=$?
+          cat cfg.log
+          if [ $rc -ne 0 ]; then echo "::error::CONFIG: $(tail -c 900 cfg.log | tr '\n\r' '  ')"; exit $rc; fi
       - name: Compilar VST3
-        run: cmake --build build --config Release --target Loudnex_VST3 -j 4
+        shell: bash
+        run: |
+          set +e
+          cmake --build build --config Release --target Loudnex_VST3 -j 4 > bld.log 2>&1; rc=$?
+          tail -n 60 bld.log
+          if [ $rc -ne 0 ]; then echo "::error::BUILD: $(grep -i -m3 'error' bld.log | tr '\n\r' '  ' | cut -c1-900)"; exit $rc; fi
       - name: Empacotar
         shell: bash
         run: |
