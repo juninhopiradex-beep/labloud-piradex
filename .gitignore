@@ -1,0 +1,11 @@
+# SEGREDOS — nunca no GitHub
+Source/Secrets.h
+PRIVADO_senhas_LOUDNEX.txt
+secrets.b64
+# build
+build/
+build-*/
+dist/
+*.o
+.DS_Store
+__pycache__/

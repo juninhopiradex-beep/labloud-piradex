@@ -1,0 +1,719 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>LOUDNEX Propostas de Interface</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;500;700&family=Outfit:wght@300;400;500;600&family=Big+Shoulders+Display:wght@600;800&family=Martian+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: moldura de página escura + um "stage" fixo de 1100x660 por proposta, escalado para caber.
+   Cada proposta é um mundo visual próprio (fixo, não segue o tema do sistema). */
+:root{
+  --bg:#07080b; --fg:#e9ecf3; --dim:#8b92a3; --line:#1b1f29; --mint:#7cf7d4;
+  --f-ui:'Outfit',system-ui,sans-serif; --f-mono:'Martian Mono',ui-monospace,Menlo,Consolas,monospace;
+  --f-disp:'Unbounded','Outfit',system-ui,sans-serif; --f-ind:'Big Shoulders Display','Outfit',system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg)}
+body{
+  background:var(--bg);color:var(--fg);font:14px/1.5 var(--f-ui);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:22px 40px;min-height:100vh;
+}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.top{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:flex-end;justify-content:space-between}
+.top h1{font:600 20px/1 var(--f-disp);letter-spacing:.22em}
+.top h1 small{display:block;margin-top:8px;font:400 11px/1 var(--f-mono);letter-spacing:.18em;color:var(--dim)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tabs button{background:#0e1118;border:1px solid var(--line);color:var(--dim);padding:9px 14px;border-radius:10px;cursor:pointer;font:500 12px var(--f-ui);letter-spacing:.12em;text-transform:uppercase}
+.tabs button b{color:var(--fg);font-weight:600;margin-right:6px}
+.tabs button.on{border-color:#3a4254;background:#171b25;color:var(--fg)}
+button:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+.note{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px 28px;color:var(--dim);font-size:13px;max-width:1180px}
+.note p{min-width:0}.note b{color:var(--fg);font-weight:500}
+
+.skin{display:none}.skin.on{display:block}
+.frame{position:relative;width:100%;max-width:1100px;margin:0 auto;border-radius:20px;overflow:hidden;border:1px solid var(--line)}
+.stage{position:absolute;left:0;top:0;width:1100px;height:660px;transform-origin:0 0;user-select:none;-webkit-user-select:none;overflow:hidden}
+.stage *{box-sizing:border-box}
+.abs{position:absolute}
+canvas.cv{position:absolute;display:block}
+
+/* ---------- componentes comuns ---------- */
+.knob{display:flex;flex-direction:column;align-items:center;cursor:ns-resize;touch-action:none;position:absolute}
+.kbody{position:relative}
+.kbody svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.kface{fill:var(--kf,#0d0f1a);stroke:var(--kfs,rgba(255,255,255,.1));stroke-width:1}
+.ktrack{fill:none;stroke:var(--kt,rgba(255,255,255,.1));stroke-width:var(--kw,4);stroke-linecap:round}
+.kval{fill:none;stroke:var(--kc,#5cf2d0);stroke-width:var(--kw,4);stroke-linecap:round;filter:var(--kglow,none)}
+.kaux{fill:none;stroke:var(--ka,#ff5d8f);stroke-width:3;stroke-linecap:round}
+.kptr{stroke:var(--kp,#fff);stroke-width:3;stroke-linecap:round}
+.kv{font:400 12px var(--f-mono);margin-top:6px;color:var(--kvc,var(--fg));white-space:nowrap}
+.kl{font:500 10px var(--f-ui);letter-spacing:.18em;color:var(--klc,#8b92a3);margin-top:3px;text-transform:uppercase;white-space:nowrap}
+.seg{position:absolute;display:flex;border:1px solid var(--sb,#2a2f3c);border-radius:10px;overflow:hidden;background:var(--sbg,transparent)}
+.seg button,.tog,.modebtn{background:transparent;border:0;color:var(--sd,#8b92a3);font:500 11px var(--f-ui);letter-spacing:.14em;cursor:pointer;padding:9px 12px;text-transform:uppercase;white-space:nowrap}
+.seg button{flex:1}
+.seg button.on{background:var(--sa,#5cf2d0);color:var(--sc,#06130f)}
+.tog{position:absolute;border:1px solid var(--sb,#2a2f3c);border-radius:10px;display:flex;align-items:center;gap:8px;background:var(--sbg,transparent)}
+.tog::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--tl,#2a2f3c)}
+.tog.on{color:var(--fg)}.tog.on::before{background:var(--sa,#5cf2d0);box-shadow:0 0 10px var(--sa,#5cf2d0)}
+.lbl{position:absolute;font:500 10px var(--f-ui);letter-spacing:.2em;color:var(--klc,#8b92a3);text-transform:uppercase;white-space:nowrap}
+.mt{position:absolute;display:flex;flex-direction:column;gap:2px}
+.mt .ml{font:500 9px var(--f-ui);letter-spacing:.2em;color:var(--klc,#8b92a3);text-transform:uppercase}
+.mt .mv{font:400 18px/1.1 var(--f-mono);color:var(--fg);white-space:nowrap}
+.mt .mv small{font-size:10px;color:var(--klc,#8b92a3);margin-left:3px}
+.role{position:absolute;border:1px solid var(--sb,#2a2f3c);border-radius:999px;background:transparent;color:var(--fg);font:500 10px var(--f-mono);letter-spacing:.12em;padding:7px 12px;cursor:pointer;text-transform:uppercase;white-space:nowrap}
+.role i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--sa,#5cf2d0);margin-right:8px;box-shadow:0 0 8px var(--sa,#5cf2d0)}
+[data-mode=lim] .g-clip,[data-mode=clip] .g-lim{display:none}
+
+/* login (por proposta) */
+.login{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:var(--lbg,rgba(5,6,10,.86));backdrop-filter:blur(14px)}
+.login[hidden]{display:none!important}
+.lbox{width:360px;padding:34px 30px 26px;border-radius:var(--lr,20px);background:var(--lpn,#10131c);border:1px solid var(--lbd,#2a3040);display:flex;flex-direction:column;gap:14px;align-items:stretch;text-align:center}
+.lbox .lt{font:var(--lft,700 26px var(--f-disp));letter-spacing:.2em;color:var(--lc,#fff)}
+.lbox .ls{font:400 10px var(--f-mono);letter-spacing:.2em;color:var(--klc,#8b92a3);margin-top:-6px}
+.lbox input{width:100%;background:var(--li,#080a10);border:1px solid var(--lbd,#2a3040);color:var(--fg);padding:13px 14px;border-radius:12px;font:400 15px var(--f-mono);text-align:center;letter-spacing:.3em;outline:none}
+.lbox input:focus{border-color:var(--sa,#5cf2d0)}
+.lbox .go{background:var(--sa,#5cf2d0);color:var(--sc,#06130f);border:0;border-radius:12px;padding:13px;font:600 12px var(--f-ui);letter-spacing:.22em;cursor:pointer;text-transform:uppercase}
+.lbox .msg{min-height:18px;font:400 12px var(--f-ui);color:#ff7b8f}
+.lbox .demo{font:300 11px/1.5 var(--f-ui);color:var(--klc,#8b92a3)}
+.lbox .demo b{font-weight:500;color:var(--fg)}
+.shake{animation:shake .32s}
+@keyframes shake{20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+@media (prefers-reduced-motion:reduce){.shake{animation:none}}
+
+/* =============== A · PULSE (vidro neon, escuro) =============== */
+#sa .stage{
+  background:radial-gradient(760px 420px at 10% -10%,rgba(122,107,255,.30),transparent 62%),radial-gradient(640px 460px at 100% 108%,rgba(92,242,208,.14),transparent 60%),#080912;
+  --ac:#5cf2d0;--ac2:#7a6bff;--grc:#ff5d8f;
+  --kc:var(--ac);--ka:var(--grc);--kglow:drop-shadow(0 0 5px var(--ac));--kt:rgba(255,255,255,.09);--kw:4;
+  --sa:var(--ac);--sc:#04120e;--sb:rgba(255,255,255,.12);--klc:#7f87a0;--lc:#fff;--lbd:rgba(255,255,255,.14);--lpn:rgba(14,16,28,.92);
+}
+#sa .stage[data-mode=clip]{--ac:#ffa13d;--ac2:#ff3d8b;--grc:#ffd23d;--sc:#1a0b00}
+#sa .pnl{position:absolute;background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.015));border:1px solid rgba(255,255,255,.08);border-radius:20px;backdrop-filter:blur(6px)}
+#sa .logo{left:30px;top:15px;font:700 22px/1 var(--f-disp);letter-spacing:.2em;background:linear-gradient(90deg,#fff,var(--ac));-webkit-background-clip:text;background-clip:text;color:transparent;position:absolute}
+#sa .logo small{display:block;margin-top:7px;font:400 9px/1 var(--f-mono);letter-spacing:.34em;-webkit-text-fill-color:#7f87a0;color:#7f87a0}
+#sa .pill{position:absolute;left:390px;top:15px;width:320px;height:42px;display:flex;padding:4px;border-radius:999px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.1)}
+#sa .pill .modebtn{flex:1;border-radius:999px;font-size:11px;letter-spacing:.24em;color:#8b92a3}
+#sa .pill .modebtn.on{background:linear-gradient(90deg,var(--ac2),var(--ac));color:#05060c;font-weight:600;box-shadow:0 0 24px color-mix(in srgb,var(--ac) 45%,transparent)}
+#sa .role{right:30px;top:20px}
+#sa .kv{color:#e9ecf3}
+#sa .mt .mv{font-size:20px}
+#sa .bar{position:absolute;height:4px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden}
+#sa .bar i{display:block;height:100%;width:calc(var(--v,0)*100%);background:linear-gradient(90deg,var(--ac2),var(--ac))}
+#sa .bar.gr i{background:var(--grc);margin-left:auto}
+#sa .gdot{position:absolute;left:0;right:0;top:0}
+
+/* =============== B · FORGE (titânio escovado, hardware) =============== */
+#sb .stage{
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.06) 0 1px,transparent 1px 3px),linear-gradient(180deg,#d9dce0 0%,#b4b9c0 46%,#969ca5 100%);
+  --kc:#ff9a1f;--ka:#18d27a;--kt:rgba(20,22,26,.30);--kw:5;--kf:transparent;--kfs:transparent;--kp:#16181c;--kvc:#1a1d22;--klc:#3b4049;
+  --sa:#ff9a1f;--sc:#1d1100;--sb:#6d737c;--sd:#2b2f36;--sbg:linear-gradient(180deg,#c3c7cd,#a4a9b1);--tl:#6d737c;--lbg:rgba(30,33,38,.78);--lpn:linear-gradient(180deg,#d9dce0,#a9aeb6);--lbd:#6d737c;--lc:#1a1d22;--li:#14161a;--lft:800 40px var(--f-ind);--lr:10px;
+  color:#1a1d22;
+}
+#sb .stage .tog.on{color:#14161a}
+#sb .lbox .demo,#sb .lbox .ls{color:#3b4049}#sb .lbox .demo b{color:#14161a}
+#sb .lbox input{color:#f2f2f2}
+#sb .lbox .msg{color:#a2162d}
+#sb .plate{position:absolute;border-radius:8px;box-shadow:inset 0 2px 5px rgba(0,0,0,.55),0 1px 0 rgba(255,255,255,.6);background:#101215;overflow:hidden}
+#sb .logo{position:absolute;left:34px;top:14px;font:800 42px/1 var(--f-ind);letter-spacing:.12em;color:#1a1d22;text-shadow:0 1px 0 rgba(255,255,255,.65)}
+#sb .logo small{position:absolute;left:3px;top:46px;font:600 11px/1 var(--f-ind);letter-spacing:.34em;color:#3b4049;white-space:nowrap;text-shadow:0 1px 0 rgba(255,255,255,.55)}
+#sb .screw{position:absolute;width:14px;height:14px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#f5f6f8,#7c828b 70%);box-shadow:0 1px 2px rgba(0,0,0,.5)}
+#sb .screw::after{content:"";position:absolute;left:2px;right:2px;top:6px;height:2px;background:#4a4f57;transform:rotate(35deg)}
+#sb .lbl{color:#2b2f36;font:600 12px var(--f-ind);letter-spacing:.22em;text-shadow:0 1px 0 rgba(255,255,255,.5)}
+#sb .kl{font:700 12px var(--f-ind);letter-spacing:.2em;text-shadow:0 1px 0 rgba(255,255,255,.5)}
+#sb .kv{font:500 11px var(--f-mono);background:#101215;color:#ffb347;padding:3px 8px;border-radius:4px;box-shadow:inset 0 1px 3px #000}
+#sb .kbody::before{content:"";position:absolute;inset:19%;border-radius:50%;background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.55),transparent 36%),repeating-conic-gradient(from 0deg,#c9ced5 0 3deg,#7d838c 3deg 6deg);box-shadow:0 7px 14px rgba(0,0,0,.45),inset 0 0 0 2px rgba(0,0,0,.35)}
+#sb .kbody::after{content:"";position:absolute;inset:30%;border-radius:50%;background:radial-gradient(circle at 36% 30%,#4a4f57,#16181c 72%);box-shadow:inset 0 2px 3px rgba(255,255,255,.18)}
+#sb .kbody svg{z-index:2}
+#sb .seg button{font:700 12px var(--f-ind);letter-spacing:.16em}
+#sb .tog{font:700 12px var(--f-ind);letter-spacing:.16em}
+#sb .modebtn{position:absolute;width:158px;height:64px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:12px;font:800 20px var(--f-ind);letter-spacing:.2em;color:#2b2f36;background:linear-gradient(180deg,#d4d8dd,#a4a9b1);box-shadow:0 5px 0 #6a7079,0 8px 12px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.8);border:1px solid #7d838c}
+#sb .modebtn::before{content:"";width:12px;height:12px;border-radius:50%;background:#4a4f57;box-shadow:inset 0 1px 2px #000}
+#sb .modebtn.on{transform:translateY(4px);box-shadow:0 1px 0 #6a7079,inset 0 2px 6px rgba(0,0,0,.35);color:#14161a}
+#sb .modebtn.on::before{background:#ff9a1f;box-shadow:0 0 12px #ff9a1f}
+#sb .role{right:34px;top:26px;background:#101215;color:#ffb347;border-color:#000;box-shadow:inset 0 1px 3px #000,0 1px 0 rgba(255,255,255,.6)}
+#sb .mt .ml{font:700 11px var(--f-ind);color:#2b2f36;letter-spacing:.22em;text-shadow:0 1px 0 rgba(255,255,255,.5)}
+#sb .mt .mv{font:500 13px var(--f-mono);background:#101215;color:#ffb347;padding:4px 8px;border-radius:4px;box-shadow:inset 0 1px 3px #000}
+
+/* =============== C · FLOW (manipulação direta) =============== */
+#sc .stage{
+  background:#090d16;
+  --lime:#c8ff3a;--coral:#ff6275;--ice:#8fd0ff;
+  --kc:var(--lime);--kt:rgba(255,255,255,.08);--kw:3;--sa:var(--lime);--sc:#0c1200;--sb:#222a3b;--klc:#6f7a93;--tl:#222a3b;--lc:#fff;--lbd:#222a3b;--lpn:#0d121e;--lr:16px;--lft:600 26px var(--f-ui);--lbg:rgba(6,9,16,.88);
+}
+#sc .stage[data-mode=clip]{--lime:#8fd0ff;--sc:#02131f}
+#sc .logo{position:absolute;left:28px;top:18px;font:500 22px/1 var(--f-ui);letter-spacing:.02em}
+#sc .logo i{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--lime);margin-left:3px;box-shadow:0 0 12px var(--lime)}
+#sc .logo small{margin-left:12px;font:400 10px var(--f-mono);letter-spacing:.2em;color:#6f7a93}
+#sc .tabs2{position:absolute;left:330px;top:14px;display:flex;gap:2px}
+#sc .tabs2 .modebtn{padding:11px 20px;font:500 12px var(--f-ui);letter-spacing:.2em;color:#6f7a93;border-bottom:2px solid transparent}
+#sc .tabs2 .modebtn.on{color:#fff;border-bottom-color:var(--lime)}
+#sc .role{right:28px;top:19px}
+#sc .disp{position:absolute;left:24px;top:68px;width:1052px;height:408px;border-radius:16px;background:#0b101c;border:1px solid #1c2436;overflow:hidden;touch-action:none}
+#sc .hnd{position:absolute;z-index:3;display:flex;align-items:center;gap:8px;cursor:ns-resize;touch-action:none;font:500 11px var(--f-mono);color:#0c1200;background:var(--lime);border-radius:999px;padding:4px 10px;box-shadow:0 0 18px color-mix(in srgb,var(--lime) 50%,transparent);white-space:nowrap}
+#sc .hnd.g{background:var(--ice);box-shadow:0 0 18px rgba(143,208,255,.45);color:#04121f}
+#sc .hnd::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.6}
+#sc .strip{position:absolute;left:24px;top:490px;width:1052px;height:150px;border-radius:16px;border:1px solid #1c2436;background:#0b101c}
+#sc .sl{position:absolute;width:210px;cursor:ew-resize;touch-action:none}
+#sc .sl .st{display:flex;justify-content:space-between;font:500 10px var(--f-ui);letter-spacing:.18em;color:#6f7a93;text-transform:uppercase;margin-bottom:9px}
+#sc .sl .st b{font:400 12px var(--f-mono);color:#fff;letter-spacing:0}
+#sc .sl .tr{height:4px;border-radius:2px;background:#1c2436;position:relative}
+#sc .sl .tr i{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:var(--lime);width:calc(var(--v,0)*100%)}
+#sc .sl .tr u{position:absolute;top:-5px;width:14px;height:14px;border-radius:50%;background:#fff;margin-left:-7px;left:calc(var(--v,0)*100%);box-shadow:0 0 0 4px rgba(200,255,58,.18)}
+#sc .mt .mv{font-size:22px}
+#sc .seg{border-radius:999px}
+#sc .tog{border-radius:999px}
+#sc .seg button{font-size:10px;padding:9px 8px}
+
+/* rodapé de cada demo */
+.cap{font:400 12px/1.6 var(--f-mono);color:var(--dim);letter-spacing:.02em;max-width:1180px}
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <h1>LOUDNEX<small>BY PIRADEX · LIMITER + CLIPPER · 3 PROPOSTAS</small></h1>
+    <div class="tabs" role="tablist">
+      <button class="on" data-skin="sa"><b>A</b>Pulse</button>
+      <button data-skin="sb"><b>B</b>Forge</button>
+      <button data-skin="sc"><b>C</b>Flow</button>
+    </div>
+  </div>
+  <div class="note" id="note"></div>
+
+  <!-- ===================== A · PULSE ===================== -->
+  <section class="skin on" id="sa"><div class="frame"><div class="stage" data-mode="lim">
+    <div class="logo">LOUDNEX<small>BY PIRADEX</small></div>
+    <div class="pill"><button class="modebtn on" data-mode-set="lim">Limiter</button><button class="modebtn" data-mode-set="clip">Clipper</button></div>
+    <button class="role" data-role><i></i><span>—</span></button>
+
+    <div class="pnl" style="left:24px;top:88px;width:760px;height:292px">
+      <canvas class="cv" id="cvA" width="1520" height="584" style="left:0;top:0;width:760px;height:292px"></canvas>
+    </div>
+
+    <div class="pnl" style="left:24px;top:396px;width:760px;height:244px">
+      <div class="g-lim">
+        <div class="knob" data-p="rel" data-size="112" data-label="Release" style="left:26px;top:20px"></div>
+        <div class="knob" data-p="look" data-size="112" data-label="Lookahead" style="left:168px;top:20px"></div>
+        <div class="knob" data-p="assist" data-size="112" data-label="Clip assist" style="left:310px;top:20px"></div>
+        <div class="lbl" style="left:476px;top:26px">Carácter</div>
+        <div class="seg" data-s="char" style="left:476px;top:46px;width:260px;height:38px"><button data-v="0">Clean</button><button data-v="1">Punch</button><button data-v="2">Loud</button></div>
+        <button class="tog" data-t="bass" style="left:476px;top:104px;height:38px">Bass guard</button>
+      </div>
+      <div class="g-clip">
+        <div class="knob" data-p="knee" data-size="112" data-label="Joelho" style="left:26px;top:20px"></div>
+        <canvas class="cv" id="cvAx" width="520" height="400" style="left:168px;top:18px;width:260px;height:200px;border-radius:14px;background:rgba(0,0,0,.28)"></canvas>
+        <div class="lbl" style="left:476px;top:26px">Forma</div>
+        <div class="seg" data-s="shape" style="left:476px;top:46px;width:260px;height:38px"><button data-v="0">Soft</button><button data-v="1">Cubic</button><button data-v="2">Hard</button></div>
+      </div>
+      <button class="tog" data-t="tp" style="left:476px;top:158px;height:38px">True peak</button>
+      <div class="lbl" style="left:476px;top:150px;display:none"></div>
+      <div class="seg" data-s="os" style="left:612px;top:158px;width:124px;height:38px"><button data-v="1">1×</button><button data-v="4">4×</button><button data-v="16">16×</button></div>
+    </div>
+
+    <div class="pnl" style="left:804px;top:88px;width:272px;height:552px">
+      <div class="knob" data-p="gain" data-aux="gr" data-size="232" data-label="Input gain" style="left:20px;top:18px"></div>
+      <div class="knob" data-p="ceil" data-size="96" data-label="Ceiling" style="left:30px;top:304px"></div>
+      <div class="knob" data-p="mix" data-size="96" data-label="Mix" style="left:146px;top:304px"></div>
+      <div class="mt" style="left:26px;top:446px"><span class="ml">True peak</span><span class="mv" data-m="tp">—</span></div>
+      <div class="mt" style="left:146px;top:446px"><span class="ml">Redução</span><span class="mv" data-m="gr">—</span></div>
+      <div class="bar gr" style="left:26px;top:488px;width:100px"><i data-bar="gr"></i></div>
+      <div class="bar" style="left:146px;top:488px;width:100px"><i data-bar="loss"></i></div>
+      <div class="mt" style="left:26px;top:500px"><span class="ml">RMS saída</span><span class="mv" data-m="rms" style="font-size:15px">—</span></div>
+      <div class="mt" style="left:146px;top:500px"><span class="ml">Perda loudness</span><span class="mv" data-m="loss" style="font-size:15px">—</span></div>
+    </div>
+
+    <div class="login" data-login>
+      <div class="lbox"><div class="lt">LOUDNEX</div><div class="ls">BY PIRADEX</div>
+        <input type="password" placeholder="••••••••" autocomplete="off" aria-label="Senha"><button class="go">Entrar</button><div class="msg"></div>
+        <div class="demo">Pré-visualização: escreve <b>master</b> ou <b>beta</b>. As senhas reais são geradas no build.</div></div>
+    </div>
+  </div></div></section>
+
+  <!-- ===================== B · FORGE ===================== -->
+  <section class="skin" id="sb"><div class="frame"><div class="stage" data-mode="lim">
+    <div class="screw" style="left:14px;top:14px"></div><div class="screw" style="right:14px;top:14px"></div>
+    <div class="screw" style="left:14px;bottom:14px"></div><div class="screw" style="right:14px;bottom:14px"></div>
+    <div class="logo">LOUDNEX<small>BY PIRADEX · HYBRID LIMITER / CLIPPER</small></div>
+    <button class="role" data-role><i></i><span>—</span></button>
+
+    <div class="plate" style="left:34px;top:92px;width:56px;height:262px"><canvas class="cv" id="cvBin" width="112" height="524" style="left:0;top:0;width:56px;height:262px"></canvas></div>
+    <div class="lbl" style="left:44px;top:360px">Entrada</div>
+    <div class="plate" style="left:108px;top:92px;width:520px;height:262px"><canvas class="cv" id="cvB" width="1040" height="524" style="left:0;top:0;width:520px;height:262px"></canvas></div>
+    <div class="plate" style="left:646px;top:92px;width:262px;height:262px"><canvas class="cv" id="cvBx" width="524" height="524" style="left:0;top:0;width:262px;height:262px"></canvas></div>
+    <div class="lbl" style="left:652px;top:360px">Função de transferência</div>
+    <div class="plate" style="left:926px;top:92px;width:56px;height:262px"><canvas class="cv" id="cvBout" width="112" height="524" style="left:0;top:0;width:56px;height:262px"></canvas></div>
+    <div class="lbl" style="left:936px;top:360px">Saída</div>
+    <div class="plate" style="left:1000px;top:92px;width:56px;height:262px"><canvas class="cv" id="cvBgr" width="112" height="524" style="left:0;top:0;width:56px;height:262px"></canvas></div>
+    <div class="lbl" style="left:1012px;top:360px">Redução</div>
+
+    <button class="modebtn on" data-mode-set="lim" style="left:34px;top:410px">LIMITER</button>
+    <button class="modebtn" data-mode-set="clip" style="left:34px;top:490px">CLIPPER</button>
+
+    <div class="knob" data-p="gain" data-size="166" data-label="Input gain" style="left:244px;top:396px"></div>
+    <div class="knob" data-p="ceil" data-size="126" data-label="Ceiling" style="left:462px;top:402px"></div>
+
+    <div class="g-lim">
+      <div class="knob" data-p="rel" data-size="92" data-label="Release" style="left:632px;top:398px"></div>
+      <div class="knob" data-p="look" data-size="92" data-label="Lookahead" style="left:742px;top:398px"></div>
+      <div class="knob" data-p="assist" data-size="92" data-label="Clip assist" style="left:852px;top:398px"></div>
+      <div class="seg" data-s="char" style="left:632px;top:552px;width:240px;height:38px"><button data-v="0">Clean</button><button data-v="1">Punch</button><button data-v="2">Loud</button></div>
+      <button class="tog" data-t="bass" style="left:884px;top:552px;height:38px">Bass guard</button>
+    </div>
+    <div class="g-clip">
+      <div class="knob" data-p="knee" data-size="92" data-label="Joelho" style="left:632px;top:398px"></div>
+      <div class="lbl" style="left:748px;top:420px">Forma de clip</div>
+      <div class="seg" data-s="shape" style="left:748px;top:442px;width:196px;height:38px"><button data-v="0">Soft</button><button data-v="1">Cubic</button><button data-v="2">Hard</button></div>
+    </div>
+    <div class="knob" data-p="mix" data-size="92" data-label="Mix" style="left:962px;top:398px"></div>
+    <button class="tog" data-t="tp" style="left:34px;top:600px;height:36px">True peak</button>
+    <div class="seg" data-s="os" style="left:176px;top:600px;width:128px;height:36px"><button data-v="1">1×</button><button data-v="4">4×</button><button data-v="16">16×</button></div>
+    <div class="mt" style="left:360px;top:604px;flex-direction:row;gap:10px;align-items:center"><span class="ml">TP</span><span class="mv" data-m="tp">—</span></div>
+    <div class="mt" style="left:490px;top:604px;flex-direction:row;gap:10px;align-items:center"><span class="ml">Perda</span><span class="mv" data-m="loss">—</span></div>
+    <div class="mt" style="left:640px;top:612px;flex-direction:row;gap:10px;align-items:center;display:none"></div>
+
+    <div class="login" data-login>
+      <div class="lbox"><div class="lt">LOUDNEX</div><div class="ls">BY PIRADEX</div>
+        <input type="password" placeholder="••••••••" autocomplete="off" aria-label="Senha"><button class="go">Entrar</button><div class="msg"></div>
+        <div class="demo">Pré-visualização: escreve <b>master</b> ou <b>beta</b>. As senhas reais são geradas no build.</div></div>
+    </div>
+  </div></div></section>
+
+  <!-- ===================== C · FLOW ===================== -->
+  <section class="skin" id="sc"><div class="frame"><div class="stage" data-mode="lim">
+    <div class="logo">loudnex<i></i><small>BY PIRADEX</small></div>
+    <div class="tabs2"><button class="modebtn on" data-mode-set="lim">Limiter</button><button class="modebtn" data-mode-set="clip">Clipper</button></div>
+    <button class="role" data-role><i></i><span>—</span></button>
+    <div class="mt" style="left:640px;top:16px"><span class="ml">True peak</span><span class="mv" data-m="tp" style="font-size:16px">—</span></div>
+    <div class="mt" style="left:790px;top:16px"><span class="ml">Redução</span><span class="mv" data-m="gr" style="font-size:16px">—</span></div>
+    <div class="mt" style="left:920px;top:16px"><span class="ml">Perda</span><span class="mv" data-m="loss" style="font-size:16px">—</span></div>
+
+    <div class="disp" id="dispC">
+      <canvas class="cv" id="cvC" width="2104" height="816" style="left:0;top:0;width:1052px;height:408px"></canvas>
+      <canvas class="cv" id="cvCx" width="300" height="300" style="left:16px;bottom:16px;width:150px;height:150px;border-radius:12px;background:rgba(9,13,22,.8);border:1px solid #1c2436"></canvas>
+      <div class="hnd" id="hCeil">TETO <span data-v="ceil">—</span></div>
+      <div class="hnd g" id="hGain">GANHO <span data-v="gain">—</span></div>
+    </div>
+
+    <div class="strip">
+      <div class="sl" data-sl="gain" style="left:28px;top:26px"></div>
+      <div class="sl" data-sl="ceil" style="left:262px;top:26px"></div>
+      <div class="sl" data-sl="mix" style="left:496px;top:26px"></div>
+      <div class="g-lim">
+        <div class="sl" data-sl="rel" style="left:28px;top:84px"></div>
+        <div class="sl" data-sl="look" style="left:262px;top:84px"></div>
+        <div class="sl" data-sl="assist" style="left:496px;top:84px"></div>
+        <div class="seg" data-s="char" style="left:728px;top:84px;width:172px;height:34px"><button data-v="0">Clean</button><button data-v="1">Punch</button><button data-v="2">Loud</button></div>
+        <button class="tog" data-t="bass" style="left:728px;top:26px;height:34px;width:116px">Bass guard</button>
+      </div>
+      <div class="g-clip">
+        <div class="sl" data-sl="knee" style="left:28px;top:84px"></div>
+        <div class="seg" data-s="shape" style="left:262px;top:84px;width:196px;height:34px"><button data-v="0">Soft</button><button data-v="1">Cubic</button><button data-v="2">Hard</button></div>
+      </div>
+      <button class="tog" data-t="tp" style="left:856px;top:26px;height:34px;width:116px">True peak</button>
+      <div class="seg" data-s="os" style="left:912px;top:84px;width:112px;height:34px"><button data-v="1">1×</button><button data-v="4">4×</button><button data-v="16">16×</button></div>
+          </div>
+
+    <div class="login" data-login>
+      <div class="lbox"><div class="lt">loudnex</div><div class="ls">BY PIRADEX</div>
+        <input type="password" placeholder="••••••••" autocomplete="off" aria-label="Senha"><button class="go">Entrar</button><div class="msg"></div>
+        <div class="demo">Pré-visualização: escreve <b>master</b> ou <b>beta</b>. As senhas reais são geradas no build.</div></div>
+    </div>
+  </div></div></section>
+
+  <p class="cap">Os medidores e as curvas são calculados em tempo real sobre um sinal de teste sintético (kick, sub, hats, palma, arpejo) com um limitador e um clipper de demonstração. Os controlos mexem de verdade nessa simulação. No plugin, o DSP e os medidores vêm do motor C++ real.</p>
+</div>
+
+<script>
+(()=>{
+'use strict';
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const db2lin=d=>Math.pow(10,d/20), lin2db=a=>20*Math.log10(Math.max(a,1e-6));
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const S=2; // fator de resolução dos canvas
+
+/* ---------- parâmetros ---------- */
+const fmtMs=v=>v<1?(v*1000).toFixed(0)+' µs':v<100?v.toFixed(1)+' ms':v<1000?v.toFixed(0)+' ms':'1.00 s';
+const PD={
+  gain:{min:0,max:24,def:6,fmt:v=>'+'+v.toFixed(1)+' dB'},
+  ceil:{min:-12,max:0,def:-1,fmt:v=>v.toFixed(1)+' dBTP'},
+  mix:{min:0,max:100,def:100,fmt:v=>Math.round(v)+' %'},
+  rel:{min:0.1,max:1000,def:60,log:true,fmt:fmtMs},
+  look:{min:0.2,max:5,def:1.5,fmt:v=>v.toFixed(2)+' ms'},
+  assist:{min:0,max:100,def:20,fmt:v=>Math.round(v)+' %'},
+  knee:{min:0,max:100,def:55,fmt:v=>Math.round(v)+' %'}
+};
+const LAB={gain:'Input gain',ceil:'Teto',mix:'Mix',rel:'Release',look:'Lookahead',assist:'Clip assist',knee:'Joelho'};
+const P={gain:6,ceil:-1,mix:100,rel:60,look:1.5,assist:20,knee:55,mode:'lim',char:0,tp:1,bass:1,os:4,shape:0};
+const norm=(k,v)=>{const d=PD[k];return d.log?(Math.log(v)-Math.log(d.min))/(Math.log(d.max)-Math.log(d.min)):(v-d.min)/(d.max-d.min)};
+const denorm=(k,n)=>{const d=PD[k];return d.log?Math.exp(Math.log(d.min)+n*(Math.log(d.max)-Math.log(d.min))):d.min+n*(d.max-d.min)};
+const refreshers=[];
+function set(k,v){ if(PD[k]) v=clamp(v,PD[k].min,PD[k].max); P[k]=v; refreshers.forEach(f=>f()); }
+
+/* ---------- escala do stage ---------- */
+let K=1;
+function fit(){
+  $$('.frame').forEach(f=>{
+    const w=f.clientWidth||1100, k=Math.min(1,w/1100);
+    f.style.height=(660*k)+'px';
+    const st=$('.stage',f); st.style.transform='scale('+k+')';
+    if(f.offsetParent) K=k;
+  });
+}
+addEventListener('resize',fit);
+
+/* ---------- arcos e botões rotativos ---------- */
+function arcPath(cx,cy,r,a0,a1){
+  const p=a=>[cx+r*Math.cos(a*Math.PI/180),cy+r*Math.sin(a*Math.PI/180)];
+  const [x0,y0]=p(a0),[x1,y1]=p(a1);
+  return 'M'+x0.toFixed(2)+' '+y0.toFixed(2)+'A'+r+' '+r+' 0 '+((a1-a0)>180?1:0)+' 1 '+x1.toFixed(2)+' '+y1.toFixed(2);
+}
+function mountKnob(el){
+  const k=el.dataset.p,d=PD[k],size=+el.dataset.size||90,aux=el.dataset.aux==='gr';
+  el.classList.add('knob');
+  el.innerHTML='<div class="kbody" style="width:'+size+'px;height:'+size+'px"><svg viewBox="0 0 100 100"><circle class="kface" cx="50" cy="50" r="31"/><path class="ktrack"/><path class="kval"/>'+(aux?'<path class="kaux"/>':'')+'<line class="kptr"/></svg></div><div class="kv"></div><div class="kl">'+(el.dataset.label||k)+'</div>';
+  const val=$('.kval',el),tr=$('.ktrack',el),ptr=$('.kptr',el),kv=$('.kv',el),auxp=$('.kaux',el);
+  tr.setAttribute('d',arcPath(50,50,43,135,405));
+  const upd=()=>{
+    const a=135+270*norm(k,P[k]);
+    val.setAttribute('d',arcPath(50,50,43,135,Math.max(135.05,a)));
+    const r=a*Math.PI/180;
+    ptr.setAttribute('x1',(50+12*Math.cos(r)).toFixed(2));ptr.setAttribute('y1',(50+12*Math.sin(r)).toFixed(2));
+    ptr.setAttribute('x2',(50+25*Math.cos(r)).toFixed(2));ptr.setAttribute('y2',(50+25*Math.sin(r)).toFixed(2));
+    kv.textContent=d.fmt(P[k]);
+  };
+  refreshers.push(upd);upd();
+  let y0=null,n0=0;
+  el.addEventListener('pointerdown',e=>{y0=e.clientY;n0=norm(k,P[k]);el.setPointerCapture(e.pointerId);e.preventDefault()});
+  el.addEventListener('pointermove',e=>{if(y0===null)return;set(k,denorm(k,clamp(n0+(y0-e.clientY)/(Math.max(.3,K)*200)*(e.shiftKey?.15:1),0,1)))});
+  const end=()=>{y0=null};el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);
+  el.addEventListener('dblclick',()=>set(k,d.def));
+  el.addEventListener('wheel',e=>{e.preventDefault();set(k,denorm(k,clamp(norm(k,P[k])-Math.sign(e.deltaY)*.02,0,1)))},{passive:false});
+  if(auxp) el._aux=v=>auxp.setAttribute('d',arcPath(50,50,37,405-270*clamp(v,.004,1),405));
+}
+$$('[data-p]').forEach(mountKnob);
+
+/* ---------- sliders (proposta C) ---------- */
+$$('[data-sl]').forEach(el=>{
+  const k=el.dataset.sl,d=PD[k];
+  el.innerHTML='<div class="st"><span>'+LAB[k]+'</span><b></b></div><div class="tr"><i></i><u></u></div>';
+  const b=$('b',el),tr=$('.tr',el);
+  const upd=()=>{el.style.setProperty('--v',norm(k,P[k]).toFixed(4));b.textContent=d.fmt(P[k])};
+  refreshers.push(upd);upd();
+  const from=e=>{const r=tr.getBoundingClientRect();set(k,denorm(k,clamp((e.clientX-r.left)/r.width,0,1)))};
+  let on=false;
+  el.addEventListener('pointerdown',e=>{on=true;el.setPointerCapture(e.pointerId);from(e)});
+  el.addEventListener('pointermove',e=>{if(on)from(e)});
+  el.addEventListener('pointerup',()=>on=false);el.addEventListener('pointercancel',()=>on=false);
+  el.addEventListener('dblclick',()=>set(k,d.def));
+});
+
+/* ---------- segmentos, toggles, modo ---------- */
+$$('.seg').forEach(s=>{const k=s.dataset.s;
+  $$('button',s).forEach(b=>b.addEventListener('click',()=>set(k,+b.dataset.v)));
+  refreshers.push(()=>$$('button',s).forEach(b=>b.classList.toggle('on',+b.dataset.v===P[k])));});
+$$('[data-t]').forEach(b=>{const k=b.dataset.t;
+  b.addEventListener('click',()=>set(k,P[k]?0:1));
+  refreshers.push(()=>{b.classList.toggle('on',!!P[k]);b.setAttribute('aria-pressed',P[k]?'true':'false')});});
+$$('[data-mode-set]').forEach(b=>{
+  b.addEventListener('click',()=>set('mode',b.dataset.modeSet));
+  refreshers.push(()=>b.classList.toggle('on',P.mode===b.dataset.modeSet));});
+refreshers.push(()=>$$('.stage').forEach(s=>{s.dataset.mode=P.mode}));
+
+/* ---------- login de demonstração (as senhas reais vêm do build) ---------- */
+const auth={role:null};
+const BETA_UNTIL=new Date(2026,10,1,23,59,59);
+function betaDays(){return Math.max(0,Math.ceil((BETA_UNTIL-new Date())/864e5))}
+function roleText(){
+  if(auth.role==='master')return 'Master';
+  if(auth.role==='beta')return 'Beta · até 01/11/2026 · '+betaDays()+' d';
+  return 'Sem sessão';
+}
+function syncAuth(){
+  $$('[data-login]').forEach(l=>{l.hidden=!!auth.role});
+  $$('[data-role] span').forEach(s=>s.textContent=roleText());
+}
+$$('[data-login]').forEach(l=>{
+  const inp=$('input',l),msg=$('.msg',l),box=$('.lbox',l);
+  const go=()=>{
+    const pw=inp.value.trim();msg.textContent='';
+    if(pw==='master'){auth.role='master'}
+    else if(pw==='beta'){
+      if(new Date()>BETA_UNTIL){msg.textContent='Senha beta expirada em 01/11/2026.';return}
+      auth.role='beta';
+    } else {msg.textContent='Senha incorreta.';box.classList.remove('shake');void box.offsetWidth;box.classList.add('shake');return}
+    inp.value='';syncAuth();
+  };
+  $('.go',l).addEventListener('click',go);
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter')go()});
+});
+$$('[data-role]').forEach(b=>b.addEventListener('click',()=>{auth.role=null;syncAuth()}));
+syncAuth();
+
+/* =====================================================================
+   Motor de demonstração: sinal sintético + limitador/clipper
+   ===================================================================== */
+const SR=24000,COLS=300,CH=400;
+const hist={inPk:new Float32Array(COLS),outPk:new Float32Array(COLS),gr:new Float32Array(COLS)};
+let head=0;
+const M={pk:-90,tp:-90,gr:0,grMax:0,rms:-90,rmsIn:-90,loss:0,hold:-90};
+let n=0,gEnv=1,lpS=0,eLow=0,eAll=1e-6,msIn=1e-9,msOut=1e-9,pend=0,seed=123456789,hatPrev=0;
+const DL=2048,dl=new Float32Array(DL),ab=new Float32Array(DL),dr=new Float32Array(DL);let w=0;
+const hx=[0,0,0,0],ho=[0,0,0,0];
+const rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296*2-1};
+const TWO_PI=Math.PI*2;
+
+function gen(k){
+  const t=k/SR,beat=60/124,bt=t%beat,e8=Math.floor(t/(beat/2)),et=t%(beat/2),bar=Math.floor(t/beat)%4;
+  let s=0;
+  s+=0.95*Math.sin(TWO_PI*(42*bt+(120/38)*(1-Math.exp(-38*bt))))*Math.exp(-bt*7.2)*(1-Math.exp(-bt*900));
+  const to=((t-beat/2)%beat+beat)%beat,f0=bar<2?55:49;
+  s+=0.55*(Math.sin(TWO_PI*f0*to)+0.28*Math.sin(TWO_PI*2*f0*to))*Math.exp(-to*5.2)*(1-Math.exp(-to*220));
+  const nz=rnd();s+=0.30*(nz-hatPrev)*Math.exp(-et*72);hatPrev=nz;
+  if(e8%2===1)s+=0.10*rnd()*Math.exp(-et*16);
+  if(bar===1||bar===3)s+=0.45*rnd()*Math.exp(-bt*22);
+  const ts=t%(beat/4),notes=[440,523.25,659.25,783.99],f=notes[Math.floor(t/(beat/4))%4];
+  s+=0.15*(Math.sin(TWO_PI*f*ts)+0.35*Math.sin(TWO_PI*2*f*ts))*Math.exp(-ts*26);
+  return s*0.7;
+}
+function softCurve(u,k){const a=Math.abs(u);if(a<=k)return u;const r=Math.max(1e-3,1-k);return Math.sign(u)*(k+r*Math.tanh((a-k)/r))}
+function shapeCurve(u){
+  if(P.shape===0)return softCurve(u,1-P.knee/100*.95);
+  if(P.shape===1){const v=clamp(u/1.5,-1,1);return 1.5*(v-v*v*v/3)}
+  return clamp(u,-1,1);
+}
+function crMax(a,b,c,d,pts){
+  let m=0;
+  for(let i=1;i<pts;i++){const t=i/pts,t2=t*t,t3=t2*t;
+    const v=.5*(2*b+(-a+c)*t+(2*a-5*b+4*c-d)*t2+(-a+3*b-3*c+d)*t3);const av=Math.abs(v);if(av>m)m=av}
+  return m;
+}
+const aLP=1-Math.exp(-TWO_PI*120/SR),aMs=1/(.4*SR);
+function column(){
+  const g=db2lin(P.gain),ceil=db2lin(P.ceil),lim=P.mode==='lim';
+  const L=lim?Math.max(1,Math.round(P.look*SR/1000)):0,assist=P.assist/100,mixW=P.mix/100,pts=P.os>=16?8:4;
+  const relBase=P.rel*[1,.55,.3][P.char]/1000,attK=Math.min(1,2/Math.max(1,L*.5));
+  let mxIn=0,mxOut=0,tpm=0,gMin=1;
+  for(let i=0;i<CH;i++){
+    const raw=gen(n++),x=raw*g,ax=Math.abs(x);if(ax>mxIn)mxIn=ax;
+    let y;
+    if(lim){
+      let xs=x;
+      if(assist>0){const c=softCurve(x/ceil,.6)*ceil;xs=x+(c-x)*assist}
+      hx[0]=hx[1];hx[1]=hx[2];hx[2]=hx[3];hx[3]=xs;
+      let pk=Math.abs(xs);
+      if(P.tp){const ip=crMax(hx[0],hx[1],hx[2],hx[3],pts);if(ip>pk)pk=ip}
+      w=(w+1)%DL;dl[w]=xs;ab[w]=pk;dr[w]=x;
+      lpS+=(x-lpS)*aLP;eLow+=(Math.abs(lpS)-eLow)*.002;eAll+=(ax-eAll)*.002;
+      let mx=0;for(let j=0;j<=L;j++){const v=ab[(w-j+DL)%DL];if(v>mx)mx=v}
+      const gReq=Math.min(1,ceil/Math.max(mx,1e-9));
+      if(gReq<gEnv){gEnv+=(gReq-gEnv)*attK}
+      else{
+        const bass=P.bass?1+2*clamp((eLow/eAll-.5)*2,0,1):1,adapt=P.char===0?1+3*(1-gEnv):1;
+        const tau=Math.max(1e-4,relBase*bass*adapt);
+        gEnv+=(1-gEnv)*(1-Math.exp(-1/(SR*tau)));
+      }
+      if(gEnv>1)gEnv=1;
+      const idx=(w-L+DL)%DL;
+      let wet=dl[idx]*gEnv;if(Math.abs(wet)>ceil)wet=Math.sign(wet)*ceil;
+      y=wet*mixW+dr[idx]*(1-mixW);
+      if(gEnv<gMin)gMin=gEnv;
+    } else {
+      const c=shapeCurve(x/ceil)*ceil;
+      y=c*mixW+x*(1-mixW);
+    }
+    const ay=Math.abs(y);if(ay>mxOut)mxOut=ay;
+    ho[0]=ho[1];ho[1]=ho[2];ho[2]=ho[3];ho[3]=y;
+    let tp=ay;if(P.tp||true){const ip=crMax(ho[0],ho[1],ho[2],ho[3],pts);if(ip>tp)tp=ip}
+    if(tp>tpm)tpm=tp;
+    msIn+=(raw*raw-msIn)*aMs;msOut+=(y*y-msOut)*aMs;
+  }
+  head=(head+1)%COLS;
+  hist.inPk[head]=mxIn;hist.outPk[head]=mxOut;
+  const gr=lim?lin2db(gMin):Math.min(0,lin2db(mxOut/Math.max(mxIn,1e-9)));
+  hist.gr[head]=gr;
+  M.pk=lin2db(mxOut);M.hold=Math.max(M.hold-.35,M.pk);
+  M.tp=Math.max(M.tp-.12,lin2db(tpm));
+  M.gr+=(gr-M.gr)*.35;if(gr<M.grMax)M.grMax=gr;
+  M.rms=10*Math.log10(msOut);M.rmsIn=10*Math.log10(msIn);
+  M.loss+=(Math.max(0,P.gain-(M.rms-M.rmsIn))-M.loss)*.05;
+}
+function xfer(inDb){
+  const a=db2lin(inDb),ceil=db2lin(P.ceil);let y;
+  if(P.mode==='lim'){const ys=softCurve(a/ceil,.6)*ceil;y=a+(ys-a)*(P.assist/100);y=Math.min(y,ceil)}
+  else y=shapeCurve(a/ceil)*ceil;
+  return lin2db(y);
+}
+
+/* ---------- desenho ---------- */
+const col=i=>(head+1+i)%COLS;
+function dbMap(db,half){return clamp((db+30)/36,0,1)*half}
+function drawWave(c,pal,o){
+  o=o||{};
+  const ctx=c.getContext('2d'),W=c.width,H=c.height,pad=(o.pad||16)*S,mid=H/2,half=H/2-pad;
+  ctx.clearRect(0,0,W,H);
+  if(pal.bg){ctx.fillStyle=pal.bg;ctx.fillRect(0,0,W,H)}
+  ctx.lineWidth=S;ctx.font='400 '+(9*S)+'px "Martian Mono",monospace';ctx.textBaseline='middle';
+  [0,-6,-12,-18,-24].forEach(db=>{
+    const off=dbMap(db,half);ctx.strokeStyle=pal.grid;ctx.beginPath();
+    ctx.moveTo(0,mid-off);ctx.lineTo(W,mid-off);ctx.moveTo(0,mid+off);ctx.lineTo(W,mid+off);ctx.stroke();
+    ctx.fillStyle=pal.label;ctx.fillText(String(db),8*S,mid-off-8*S);
+  });
+  ctx.strokeStyle=pal.grid;ctx.beginPath();ctx.moveTo(0,mid);ctx.lineTo(W,mid);ctx.stroke();
+  const x=i=>i/(COLS-1)*W;
+  const env=(arr)=>{const a=new Float32Array(COLS);for(let i=0;i<COLS;i++)a[i]=dbMap(lin2db(arr[col(i)]),half);return a};
+  const ein=env(hist.inPk),eout=env(hist.outPk);
+  // entrada (pós-ganho)
+  ctx.beginPath();for(let i=0;i<COLS;i++)ctx.lineTo(x(i),mid-ein[i]);for(let i=COLS-1;i>=0;i--)ctx.lineTo(x(i),mid+ein[i]);ctx.closePath();
+  ctx.fillStyle=pal.inFill;ctx.fill();ctx.strokeStyle=pal.inStroke;ctx.lineWidth=S;ctx.stroke();
+  // saída
+  ctx.beginPath();for(let i=0;i<COLS;i++)ctx.lineTo(x(i),mid-eout[i]);for(let i=COLS-1;i>=0;i--)ctx.lineTo(x(i),mid+eout[i]);ctx.closePath();
+  const gr=ctx.createLinearGradient(0,mid-half,0,mid+half);gr.addColorStop(0,pal.outA);gr.addColorStop(.5,pal.outB);gr.addColorStop(1,pal.outA);
+  ctx.fillStyle=gr;ctx.fill();
+  if(pal.outLine){ctx.strokeStyle=pal.outLine;ctx.lineWidth=1.6*S;if(pal.glow){ctx.shadowColor=pal.outLine;ctx.shadowBlur=10*S}ctx.stroke();ctx.shadowBlur=0}
+  // redução de ganho (barras penduradas)
+  const bw=W/COLS+.6;
+  for(let i=0;i<COLS;i++){
+    const g=clamp(-hist.gr[col(i)]/12,0,1);if(g<=0.005)continue;
+    const h=g*(o.grH||.34)*H,gg=ctx.createLinearGradient(0,0,0,h);gg.addColorStop(0,pal.gr);gg.addColorStop(1,pal.grFade);
+    ctx.fillStyle=gg;ctx.fillRect(x(i)-bw/2,0,bw,h);
+  }
+  // teto
+  const ce=dbMap(P.ceil,half);
+  ctx.setLineDash([6*S,5*S]);ctx.strokeStyle=pal.ceil;ctx.lineWidth=1.3*S;
+  ctx.beginPath();ctx.moveTo(0,mid-ce);ctx.lineTo(W,mid-ce);ctx.moveTo(0,mid+ce);ctx.lineTo(W,mid+ce);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle=pal.ceil;ctx.textAlign='right';ctx.fillText('TETO '+P.ceil.toFixed(1),W-10*S,mid-ce-9*S);ctx.textAlign='left';
+  // cursor
+  ctx.fillStyle=pal.cursor;ctx.fillRect(W-2*S,0,2*S,H);
+  return {mid,half};
+}
+function drawXfer(c,pal){
+  const ctx=c.getContext('2d'),W=c.width,H=c.height,m=26*S,iw=W-m*1.4,ih=H-m*1.4,x0=m,y0=H-m;
+  const lo=-36,hi=12,X=d=>x0+(d-lo)/(hi-lo)*iw,Y=d=>y0-(clamp(d,lo,hi)-lo)/(hi-lo)*ih;
+  ctx.clearRect(0,0,W,H);
+  if(pal.bg){ctx.fillStyle=pal.bg;ctx.fillRect(0,0,W,H)}
+  ctx.lineWidth=S;ctx.font='400 '+(8*S)+'px "Martian Mono",monospace';ctx.fillStyle=pal.label;ctx.textBaseline='middle';
+  for(let d=-36;d<=12;d+=12){ctx.strokeStyle=pal.grid;ctx.beginPath();ctx.moveTo(X(d),Y(lo));ctx.lineTo(X(d),Y(hi));ctx.moveTo(X(lo),Y(d));ctx.lineTo(X(hi),Y(d));ctx.stroke();
+    ctx.textAlign='center';ctx.fillText(d,X(d),y0+12*S);ctx.textAlign='right';ctx.fillText(d,x0-6*S,Y(d))}
+  ctx.setLineDash([4*S,4*S]);ctx.strokeStyle=pal.unity;ctx.beginPath();ctx.moveTo(X(lo),Y(lo));ctx.lineTo(X(hi),Y(hi));ctx.stroke();ctx.setLineDash([]);
+  ctx.beginPath();for(let d=lo;d<=hi;d+=.5){const yy=Y(xfer(d));d===lo?ctx.moveTo(X(d),yy):ctx.lineTo(X(d),yy)}
+  ctx.strokeStyle=pal.curve;ctx.lineWidth=2.4*S;if(pal.glow){ctx.shadowColor=pal.curve;ctx.shadowBlur=9*S}ctx.stroke();ctx.shadowBlur=0;
+  for(let i=0;i<40;i++){
+    const j=col(COLS-1-i),a=lin2db(hist.inPk[j]),b=lin2db(hist.outPk[j]);
+    ctx.fillStyle=pal.dot;ctx.globalAlpha=(1-i/40)*.9;ctx.beginPath();ctx.arc(X(a),Y(b),(i===0?4.2:2.6)*S,0,TWO_PI);ctx.fill();
+  }
+  ctx.globalAlpha=1;
+}
+function ladder(c,v,o){ // v em dB, o.min..o.max, de baixo para cima (ou de cima para baixo se o.down)
+  const ctx=c.getContext('2d'),W=c.width,H=c.height;ctx.clearRect(0,0,W,H);
+  const segs=o.segs||34,gap=3*S,sh=(H-12*S-gap*(segs-1))/segs,lit=Math.round(clamp((v-o.min)/(o.max-o.min),0,1)*segs);
+  for(let i=0;i<segs;i++){
+    const idx=o.down?i:segs-1-i,on=o.down?(i<lit):(i>=segs-lit);
+    const f=(o.down?(i/segs):(1-i/segs));
+    const color=o.color(f);
+    ctx.globalAlpha=on?1:.16;ctx.fillStyle=color;
+    const xw=W-14*S;ctx.fillRect(7*S,6*S+i*(sh+gap),xw,sh);
+    if(on&&o.glow){ctx.shadowColor=color;ctx.shadowBlur=6*S;ctx.fillRect(7*S,6*S+i*(sh+gap),xw,sh);ctx.shadowBlur=0}
+  }
+  ctx.globalAlpha=1;
+}
+
+/* paletas */
+const palA={grid:'rgba(255,255,255,.06)',label:'rgba(255,255,255,.3)',inFill:'rgba(122,107,255,.10)',inStroke:'rgba(160,150,255,.5)',outA:'rgba(92,242,208,.80)',outB:'rgba(92,242,208,.14)',outLine:'#9bffe9',glow:true,gr:'rgba(255,93,143,.85)',grFade:'rgba(255,93,143,0)',ceil:'rgba(255,255,255,.5)',cursor:'rgba(255,255,255,.5)'};
+const palAc={...palA,outA:'rgba(255,161,61,.85)',outB:'rgba(255,61,139,.16)',outLine:'#ffd29b',gr:'rgba(255,210,61,.85)',grFade:'rgba(255,210,61,0)',inFill:'rgba(255,61,139,.10)',inStroke:'rgba(255,130,180,.5)'};
+const palB={bg:'#0c0e10',grid:'rgba(255,170,60,.10)',label:'rgba(255,170,60,.45)',inFill:'rgba(255,170,60,.06)',inStroke:'rgba(255,170,60,.35)',outA:'rgba(255,154,31,.55)',outB:'rgba(255,154,31,.10)',outLine:'#ffb347',glow:true,gr:'rgba(24,210,122,.8)',grFade:'rgba(24,210,122,0)',ceil:'#18d27a',cursor:'rgba(255,255,255,.35)'};
+const palBx={bg:'#0c0e10',grid:'rgba(255,170,60,.12)',label:'rgba(255,170,60,.5)',unity:'rgba(255,255,255,.18)',curve:'#ffb347',glow:true,dot:'#18d27a'};
+const palC={bg:'#0b101c',grid:'rgba(255,255,255,.05)',label:'rgba(143,160,200,.45)',inFill:'rgba(143,208,255,.07)',inStroke:'rgba(143,208,255,.45)',outA:'rgba(200,255,58,.75)',outB:'rgba(200,255,58,.10)',outLine:'#e4ff8f',glow:false,gr:'rgba(255,98,117,.9)',grFade:'rgba(255,98,117,0)',ceil:'#c8ff3a',cursor:'rgba(255,255,255,.4)'};
+const palCc={...palC,outA:'rgba(143,208,255,.75)',outB:'rgba(143,208,255,.10)',outLine:'#d0ecff',ceil:'#8fd0ff',inFill:'rgba(255,98,117,.07)',inStroke:'rgba(255,130,150,.45)'};
+const palCx={bg:null,grid:'rgba(255,255,255,.06)',label:'rgba(143,160,200,.5)',unity:'rgba(255,255,255,.16)',curve:'#c8ff3a',glow:false,dot:'#ff6275'};
+
+/* medidores em texto */
+const fmtDb=v=>v<=-89?'−∞':(v>=0?'+':'')+v.toFixed(1).replace('-','−');
+function updMeters(root){
+  const set1=(k,txt,unit)=>$$('[data-m="'+k+'"]',root).forEach(e=>{const t=txt+(unit?'<small>'+unit+'</small>':'');if(e._t!==t){e._t=t;e.innerHTML=t}});
+  set1('tp',fmtDb(M.tp),'dBTP');set1('gr',fmtDb(M.gr),'dB');set1('rms',fmtDb(M.rms),'dB');set1('loss',M.loss.toFixed(1),'dB');
+  $$('[data-bar="gr"]',root).forEach(e=>e.style.setProperty('--v',clamp(-M.gr/12,0,1).toFixed(3)));
+  $$('[data-bar="loss"]',root).forEach(e=>e.style.setProperty('--v',clamp(M.loss/4,0,1).toFixed(3)));
+}
+$$('[data-m="gr"]').forEach(e=>e.addEventListener('click',()=>{M.grMax=0}));
+
+/* ---------- renderização por proposta ---------- */
+function renderA(){
+  const root=$('#sa');
+  drawWave($('#cvA'),P.mode==='lim'?palA:palAc,{grH:.36});
+  const knob=$('[data-p=gain]',root);if(knob&&knob._aux)knob._aux(clamp(-M.gr/12,0,1));
+  if(P.mode==='clip')drawXfer($('#cvAx'),{bg:null,grid:'rgba(255,255,255,.07)',label:'rgba(255,255,255,.35)',unity:'rgba(255,255,255,.2)',curve:'#ffa13d',glow:true,dot:'#ffd23d'});
+  updMeters(root);
+}
+function renderB(){
+  const root=$('#sb');
+  drawWave($('#cvB'),palB,{grH:.30,pad:22});
+  drawXfer($('#cvBx'),palBx);
+  const warm=f=>f<.15?'#ff4a3a':f<.35?'#ffb347':'#ff9a1f';
+  ladder($('#cvBin'),lin2db(hist.inPk[head]),{min:-30,max:6,color:warm,glow:true});
+  ladder($('#cvBout'),M.pk,{min:-30,max:6,color:warm,glow:true});
+  ladder($('#cvBgr'),-M.gr,{min:0,max:12,down:true,segs:24,color:()=>'#18d27a',glow:true});
+  updMeters(root);
+}
+let C_geom={mid:0,half:0};
+function renderC(){
+  const root=$('#sc');
+  C_geom=drawWave($('#cvC'),P.mode==='lim'?palC:palCc,{grH:.3,pad:26});
+  drawXfer($('#cvCx'),{...palCx,curve:P.mode==='lim'?'#c8ff3a':'#8fd0ff'});
+  const half=C_geom.half/S,mid=C_geom.mid/S;
+  const hC=$('#hCeil'),hG=$('#hGain');
+  hC.style.left='14px';hC.style.top=(mid-dbMap(P.ceil,half)-12)+'px';
+  let pk=0;for(let i=0;i<90;i++)pk=Math.max(pk,hist.inPk[col(COLS-1-i)]);
+  hG.style.right='16px';hG.style.top=clamp(mid-dbMap(lin2db(pk),half)-12,6,360)+'px';
+  hG.style.display='';
+  $$('[data-v=ceil]',hC).forEach(e=>e.textContent=P.ceil.toFixed(1)+' dBTP');
+  $$('[data-v=gain]',hG).forEach(e=>e.textContent='+'+P.gain.toFixed(1)+' dB');
+  updMeters(root);
+}
+/* manipulação direta (C) */
+(function(){
+  const disp=$('#dispC'),hC=$('#hCeil'),hG=$('#hGain');
+  const drag=(el,fn)=>{let on=false,y0=0,v0=0;
+    el.addEventListener('pointerdown',e=>{on=true;y0=e.clientY;v0=fn.get();el.setPointerCapture(e.pointerId);e.preventDefault()});
+    el.addEventListener('pointermove',e=>{if(on)fn.set(v0,(e.clientY-y0)/Math.max(.3,K))});
+    const end=()=>{on=false};el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end)};
+  drag(hC,{get:()=>P.ceil,set:(v0,dy)=>{const half=C_geom.half/S;set('ceil',v0-dy/half*36)}});
+  drag(hG,{get:()=>P.gain,set:(v0,dy)=>{const half=C_geom.half/S;set('gain',v0-dy/half*36)}});
+})();
+
+/* ---------- notas por proposta ---------- */
+const NOTES={
+  sa:['<b>Pulse.</b> Vidro escuro com brilho neon. O anel do Input Gain mostra a redução de ganho em tempo real a contrair por dentro.','<b>Cor com significado.</b> Menta e violeta no Limiter, laranja e magenta no Clipper: a interface inteira muda de cor ao trocar de modo.','<b>Para quem gosta</b> de plugins modernos tipo Dreamscape, mas com leitura imediata dos medidores.'],
+  sb:['<b>Forge.</b> Hardware de masterização em titânio escovado, botões com serrilha e LEDs âmbar. Contraste total com os plugins escuros do mercado.','<b>Transferência ao vivo.</b> A curva de entrada contra saída mostra o ponto actual e o rasto dos últimos 40 blocos, no Limiter e no Clipper.','<b>Medidores de LEDs</b> de entrada, saída e redução, lidos de relance.'],
+  sc:['<b>Flow.</b> O ecrã é o controlo. Arrasta a linha do teto e a etiqueta do ganho directamente sobre a forma de onda.','<b>Interface limpa</b> em tinta escura com verde-limão no Limiter e azul-gelo no Clipper, na linha FabFilter que costumas gostar.','<b>Mais espaço de análise.</b> Os controlos finos ficam numa faixa compacta por baixo.']
+};
+function note(id){const el=$('#note');el.innerHTML=NOTES[id].map(t=>'<p>'+t+'</p>').join('')}
+
+/* ---------- separadores ---------- */
+let active='sa';
+$$('.tabs button').forEach(b=>b.addEventListener('click',()=>{
+  active=b.dataset.skin;
+  $$('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  $$('.skin').forEach(s=>s.classList.toggle('on',s.id===active));
+  note(active);fit();
+  try{history.replaceState(null,'','#'+active)}catch(e){}
+}));
+const h=(location.hash||'').slice(1);
+if(h==='sb'||h==='sc'){const b=$('.tabs button[data-skin='+h+']');if(b)b.click()}
+note(active);
+refreshers.forEach(f=>f());
+fit();
+
+/* ---------- ciclo ---------- */
+let last=performance.now();
+function frame(now){
+  const dt=Math.min(100,now-last);last=now;pend+=dt/1000*SR;
+  let guard=0;while(pend>=CH&&guard++<12){column();pend-=CH}
+  if(pend>CH*12)pend=0;
+  if(active==='sa')renderA();else if(active==='sb')renderB();else renderC();
+  requestAnimationFrame(frame);
+}
+for(let i=0;i<COLS*2;i++)column();
+requestAnimationFrame(frame);
+window.__loudnex={P,M,set,auth,syncAuth};
+})();
+</script>

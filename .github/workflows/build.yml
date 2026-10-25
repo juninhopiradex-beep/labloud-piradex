@@ -1,0 +1,47 @@
+name: build
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+jobs:
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Segredos (Source/Secrets.h)
+        run: echo "${{ secrets.LABLOUD_SECRETS_B64 }}" | base64 --decode > Source/Secrets.h
+      - name: Configurar (universal arm64 + x86_64)
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Compilar VST3 + AU
+        run: cmake --build build --config Release --target Loudnex_VST3 Loudnex_AU -j 4
+      - name: Empacotar
+        run: |
+          mkdir out
+          cp -R "build/Loudnex_artefacts/Release/VST3" out/ || true
+          cp -R "build/Loudnex_artefacts/Release/AU" out/ || true
+          cd out && zip -r ../LABLOUD-macOS.zip .
+      - uses: actions/upload-artifact@v4
+        with: { name: LABLOUD-macOS, path: LABLOUD-macOS.zip }
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Segredos (Source/Secrets.h)
+        shell: bash
+        run: echo "${{ secrets.LABLOUD_SECRETS_B64 }}" | base64 --decode > Source/Secrets.h
+      - name: Configurar
+        run: cmake -B build -G "Visual Studio 17 2022" -A x64
+      - name: Compilar VST3
+        run: cmake --build build --config Release --target Loudnex_VST3 -j 4
+      - name: Empacotar
+        shell: bash
+        run: |
+          mkdir out
+          cp -R build/Loudnex_artefacts/Release/VST3 out/
+          cd out && 7z a ../LABLOUD-Windows.zip .
+      - uses: actions/upload-artifact@v4
+        with: { name: LABLOUD-Windows, path: LABLOUD-Windows.zip }
+
+  # AAX: precisa do SDK da Avid e da assinatura PACE/iLok (segredos próprios). Não está ativo aqui.
