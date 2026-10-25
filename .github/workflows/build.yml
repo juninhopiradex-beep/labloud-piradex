@@ -15,14 +15,18 @@ jobs:
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
       - name: Compilar VST3 + AU
         run: cmake --build build --config Release --target Loudnex_VST3 Loudnex_AU -j 4
-      - name: Empacotar
+      - name: Instalador .pkg
         run: |
-          mkdir out
-          cp -R "build/Loudnex_artefacts/Release/VST3" out/ || true
-          cp -R "build/Loudnex_artefacts/Release/AU" out/ || true
-          cd out && zip -r ../LABLOUD-macOS.zip .
+          set -e
+          S=stage; V="$S/Library/Audio/Plug-Ins/VST3"; A="$S/Library/Audio/Plug-Ins/Components"
+          mkdir -p "$V" "$A"
+          cp -R build/Loudnex_artefacts/Release/VST3/*.vst3 "$V/"
+          cp -R build/Loudnex_artefacts/Release/AU/*.component "$A/"
+          for b in "$V"/*.vst3 "$A"/*.component; do codesign --force --deep -s - "$b"; done
+          pkgbuild --root "$S" --identifier com.piradex.labloud.pkg --version 0.2.0 --install-location / --ownership recommended LABLOUD-macOS.pkg
+          (cd "$S/Library/Audio/Plug-Ins" && zip -qr "$OLDPWD/LABLOUD-macOS.zip" .)
       - uses: actions/upload-artifact@v4
-        with: { name: LABLOUD-macOS, path: LABLOUD-macOS.zip }
+        with: { name: LABLOUD-macOS, path: "LABLOUD-macOS.pkg\nLABLOUD-macOS.zip" }
 
   windows:
     runs-on: windows-latest
@@ -45,13 +49,16 @@ jobs:
           cmake --build build --config Release --target Loudnex_VST3 -j 4 > bld.log 2>&1; rc=$?
           tail -n 60 bld.log
           if [ $rc -ne 0 ]; then echo "::error::BUILD: $(grep -i -m3 'error' bld.log | tr '\n\r' '  ' | cut -c1-900)"; exit $rc; fi
-      - name: Empacotar
+      - name: Instalador .exe (Inno Setup)
         shell: bash
         run: |
-          mkdir out
-          cp -R build/Loudnex_artefacts/Release/VST3 out/
-          cd out && 7z a ../LABLOUD-Windows.zip .
+          set -e
+          choco install innosetup -y --no-progress || true
+          ISCC="/c/Program Files (x86)/Inno Setup 6/ISCC.exe"
+          "$ISCC" installer/labloud.iss
+          mkdir out && cp -R build/Loudnex_artefacts/Release/VST3 out/
+          (cd out && 7z a ../LABLOUD-Windows.zip .)
       - uses: actions/upload-artifact@v4
-        with: { name: LABLOUD-Windows, path: LABLOUD-Windows.zip }
+        with: { name: LABLOUD-Windows, path: "LABLOUD-Setup-Windows.exe\nLABLOUD-Windows.zip" }
 
   # AAX: precisa do SDK da Avid e da assinatura PACE/iLok (segredos próprios). Não está ativo aqui.
