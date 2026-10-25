@@ -10,3 +10,4 @@ dist/
 .DS_Store
 __pycache__/
 editor_clipper.png
+shot_*.png

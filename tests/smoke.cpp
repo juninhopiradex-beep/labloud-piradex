@@ -288,18 +288,24 @@ int main()
     {
         setParam (p, ids::mode, 0.f); setParam (p, ids::gain, 9.f); p.prepareToPlay (fs, bs);
         for (int i = 0; i < 80; ++i) run (p, std::vector<float> (prog.begin() + i * 1000, prog.begin() + i * 1000 + 1000), 500);
-        std::unique_ptr<juce::AudioProcessorEditor> ed (p.createEditor()); ed->setSize (1000, 600);
-        for (int mode = 0; mode < 2; ++mode)
+        std::unique_ptr<juce::AudioProcessorEditor> ed (p.createEditor()); ed->setSize (1280, 820);
+        auto* le = dynamic_cast<LoudnexEditor*> (ed.get());
+        struct Shot { int mode, page; bool adv, light; const char* name; };
+        const Shot shots[] = { { 0,0,false,false,"lim_basic_dark" }, { 0,0,true,false,"lim_adv_dark" }, { 1,0,false,false,"clip_basic_dark" }, { 1,0,true,false,"clip_adv_dark" },
+                               { 2,0,false,false,"hyb_basic_dark" }, { 2,0,true,false,"hyb_adv_dark" }, { 2,1,false,false,"multiband_dark" }, { 2,2,false,false,"assist_dark" },
+                               { 0,0,false,true,"lim_basic_light" }, { 1,0,true,true,"clip_adv_light" }, { 2,1,false,true,"multiband_light" }, { 2,2,false,true,"assist_light" } };
+        for (auto& s : shots)
         {
-            setParam (p, ids::mode, (float) mode);
-            for (int i = 0; i < 60; ++i) { run (p, std::vector<float> (prog.begin() + i * 1000, prog.begin() + i * 1000 + 1000), 500); if (auto* e = dynamic_cast<LoudnexEditor*> (ed.get())) (void) e; }
-            juce::MessageManager::getInstance()->runDispatchLoopUntil (150);
+            setParam (p, ids::mode, (float) s.mode); setParam (p, ids::mb, s.page == 1 ? 1.f : 0.f);
+            for (int i = 0; i < 60; ++i) run (p, std::vector<float> (prog.begin() + i * 1000, prog.begin() + i * 1000 + 1000), 500);
+            if (le != nullptr) le->showForTest (s.page, s.adv, s.light);
+            juce::MessageManager::getInstance()->runDispatchLoopUntil (200);
             auto img = ed->createComponentSnapshot (ed->getLocalBounds(), true, 1.0f);
-            juce::File f (juce::File::getCurrentWorkingDirectory().getChildFile (mode == 0 ? "editor_limiter.png" : "editor_clipper.png"));
+            juce::File f (juce::File::getCurrentWorkingDirectory().getChildFile (juce::String ("shot_") + s.name + ".png"));
             juce::FileOutputStream fo (f); fo.setPosition (0); fo.truncate(); juce::PNGImageFormat().writeImageToStream (img, fo);
-            std::printf ("        editor guardado em %s\n", f.getFullPathName().toRawUTF8());
         }
-        CHECK (true, "editor criado e desenhado nos dois modos");
+        if (le != nullptr) le->showForTest (0, false, false);
+        CHECK (true, "editor criado e desenhado em 3 modos, 3 páginas e 2 skins");
         AccessManager::get().logout(); juce::MessageManager::getInstance()->runDispatchLoopUntil (120);
         auto img = ed->createComponentSnapshot (ed->getLocalBounds(), true, 1.0f);
         juce::File f (juce::File::getCurrentWorkingDirectory().getChildFile ("editor_login.png"));
