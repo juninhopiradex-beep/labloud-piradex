@@ -9,8 +9,6 @@ jobs:
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
-      - name: Segredos (Source/Secrets.h)
-        run: echo "${{ secrets.LABLOUD_SECRETS_B64 }}" | base64 --decode > Source/Secrets.h
       - name: Configurar (universal arm64 + x86_64)
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
       - name: Compilar VST3 + AU
@@ -33,9 +31,6 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Segredos (Source/Secrets.h)
-        shell: bash
-        run: echo "${{ secrets.LABLOUD_SECRETS_B64 }}" | base64 --decode > Source/Secrets.h
       - name: Configurar
         shell: bash
         run: |
