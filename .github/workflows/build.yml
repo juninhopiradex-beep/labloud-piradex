@@ -23,7 +23,8 @@ jobs:
           cp -R build/Loudnex_artefacts/Release/VST3/*.vst3 "$V/"
           cp -R build/Loudnex_artefacts/Release/AU/*.component "$A/"
           for b in "$V"/*.vst3 "$A"/*.component; do codesign --force --deep -s - "$b"; done
-          pkgbuild --root "$S" --identifier com.piradex.labloud.pkg --version 0.2.0 --install-location / --ownership recommended LABLOUD-macOS.pkg
+          pkgbuild --root "$S" --identifier com.piradex.labloud.pkg --version 0.2.0 --install-location / --ownership recommended labloud-component.pkg
+          productbuild --distribution installer/distribution.xml --resources installer --package-path . LABLOUD-macOS.pkg
           (cd "$S/Library/Audio/Plug-Ins" && zip -qr "$OLDPWD/LABLOUD-macOS.zip" .)
       - uses: actions/upload-artifact@v4
         with: { name: LABLOUD-macOS, path: "LABLOUD-macOS.pkg\nLABLOUD-macOS.zip" }

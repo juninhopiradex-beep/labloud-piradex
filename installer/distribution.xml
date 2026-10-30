@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<installer-gui-script minSpecVersion="2">
+    <title>LABLOUD by Piradex</title>
+    <welcome file="welcome.html" mime-type="text/html"/>
+    <options customize="never" require-scripts="false" rootVolumeOnly="true" hostArchitectures="x86_64,arm64"/>
+    <choices-outline>
+        <line choice="default"/>
+    </choices-outline>
+    <choice id="default" title="LABLOUD by Piradex">
+        <pkg-ref id="com.piradex.labloud.pkg"/>
+    </choice>
+    <pkg-ref id="com.piradex.labloud.pkg" version="0.2.0" onConclusion="none">labloud-component.pkg</pkg-ref>
+</installer-gui-script>

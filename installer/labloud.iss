@@ -21,4 +21,5 @@ WizardStyle=modern
 Source: "..\build\Loudnex_artefacts\Release\VST3\LABLOUD by Piradex.vst3\*"; DestDir: "{commoncf64}\VST3\LABLOUD by Piradex.vst3"; Flags: recursesubdirs createallsubdirs ignoreversion
 
 [Messages]
+WelcomeLabel2=Este assistente vai instalar o LABLOUD by Piradex no teu sistema.%n%nProfessional Audio Plugin | Beatfreak Music%nCriador e Desenvolvedor: Ricardo Amorim / Juninho Piradex%nVersao 0.2.0
 FinishedLabel=O LABLOUD by Piradex foi instalado na pasta VST3 do sistema. Reinicie o seu DAW e faça um novo scan de plugins.
