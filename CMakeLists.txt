@@ -8,7 +8,7 @@ endif()
 # Windows: runtime do Visual C++ embutido (não precisa do "VC++ Redistributable")
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
-project(LABLOUD VERSION 0.2.0 LANGUAGES C CXX)
+project(LABLOUD VERSION 0.3.0 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -64,6 +64,11 @@ target_sources(Loudnex PRIVATE
     Source/Access.cpp)
 target_include_directories(Loudnex PRIVATE Source)
 
+# PCC (Plugin Control Central): chaves de licença validadas online, mesma infraestrutura de todos os plugins Piradex
+set(PIRADEX_PCC_URL "https://ejjeittwyjttmevhajxo.supabase.co" CACHE STRING "URL do projeto Supabase do PCC")
+set(PIRADEX_PCC_PUBKEY "064c37512051906b9c8f1a9dfc962e9a1cd4c9f5b0f44ce66a12842b8e70a868" CACHE STRING "Chave pública Ed25519 do PCC (64 hex)")
+target_compile_definitions(Loudnex PUBLIC PIRADEX_PCC_URL="${PIRADEX_PCC_URL}" PIRADEX_PCC_PUBKEY="${PIRADEX_PCC_PUBKEY}" PIRADEX_PCC_VERSION="${PROJECT_VERSION}")
+
 target_compile_definitions(Loudnex PUBLIC
     JUCE_WEB_BROWSER=0
     JUCE_USE_CURL=0
@@ -103,7 +108,7 @@ if(LX_BUILD_SMOKE)
     juce_add_console_app(LoudnexSmoke PRODUCT_NAME "loudnex_smoke")
     target_sources(LoudnexSmoke PRIVATE tests/smoke.cpp Source/PluginProcessor.cpp Source/PluginEditor.cpp Source/Access.cpp)
     target_include_directories(LoudnexSmoke PRIVATE Source)
-    target_compile_definitions(LoudnexSmoke PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_MODAL_LOOPS_PERMITTED=1
+    target_compile_definitions(LoudnexSmoke PRIVATE PIRADEX_PCC_URL="${PIRADEX_PCC_URL}" PIRADEX_PCC_PUBKEY="${PIRADEX_PCC_PUBKEY}" PIRADEX_PCC_VERSION="${PROJECT_VERSION}" JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_MODAL_LOOPS_PERMITTED=1
         JUCE_STANDALONE_APPLICATION=1 JUCE_PLUGINHOST_AU=0 LX_VERSION_STRING="${PROJECT_VERSION}")
     target_link_libraries(LoudnexSmoke PRIVATE juce::juce_audio_utils juce::juce_audio_processors juce::juce_dsp juce::juce_recommended_config_flags)
 endif()

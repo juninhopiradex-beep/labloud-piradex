@@ -558,13 +558,17 @@ void Login::submit()
     juce::Thread::launch ([safe, pass, rem]
     {
         const auto m = AccessManager::matchPassword (pass);      // PBKDF2: fora da thread de mensagens
-        juce::MessageManager::callAsync ([safe, m, rem]
+        piradex::pcc::Check online;                               // chave de licença: pergunta ao PCC
+        if (m.index < 0 && ! m.expired) online = AccessManager::checkOnline (pass);
+        juce::MessageManager::callAsync ([safe, m, rem, online]
         {
             if (safe == nullptr) return;
-            const auto res = AccessManager::get().applyLogin (m, rem);
+            const auto res = online.outcome != piradex::pcc::Outcome::Disabled ? AccessManager::get().applyOnline (online, rem)
+                                                                               : AccessManager::get().applyLogin (m, rem);
             safe->busy = false; safe->enter.setEnabled (true);
             safe->msg.setColour (juce::Label::textColourId, juce::Colour (0xffff6b7a));
             if (res == AccessManager::LoginResult::Ok) { safe->pw.clear(); safe->msg.setText ({}, juce::dontSendNotification); if (safe->onOk) safe->onOk(); }
+            else if (res == AccessManager::LoginResult::Online) safe->msg.setText (AccessManager::get().onlineText(), juce::dontSendNotification);
             else if (res == AccessManager::LoginResult::Expired) safe->msg.setText (juce::CharPointer_UTF8 ("Esta senha beta j\xC3\xA1 expirou."), juce::dontSendNotification);
             else safe->msg.setText ("Senha incorreta.", juce::dontSendNotification);
         });
@@ -770,7 +774,11 @@ void LoudnexEditor::layoutAll()
 
 void LoudnexEditor::timerCallback()
 {
-    const bool unlocked = AccessManager::get().isUnlocked();
+    auto& acc = AccessManager::get();
+    acc.checkExpiry();                                                    // beta / licença online caducada
+    if (acc.claimOnlineRecheck())                                         // licença online: revalida no PCC 1x por dia
+        juce::Thread::launch ([] { AccessManager::get().revalidateOnline(); });
+    const bool unlocked = acc.isUnlocked();
     if (unlocked != wasUnlocked || shownMode < 0) { wasUnlocked = unlocked; login.setVisible (! unlocked); logoutBtn.setVisible (unlocked); content.repaint(); repaint(); }
     const int mode = juce::roundToInt (R (proc, ids::mode));
     if (mode != shownMode) { shownMode = mode; layoutAll(); }

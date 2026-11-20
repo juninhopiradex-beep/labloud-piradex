@@ -58,6 +58,37 @@ int main()
     AccessManager::get().applyLogin ({ 0, false }, false);
     CHECK (AccessManager::get().isUnlocked(), "master desbloqueia");
 
+    std::printf ("Licença online (PCC)\n");
+    {
+        auto check = [&] (bool c, const char* w) { CHECK (c, "%s", w); };
+        namespace pc = piradex::pcc;
+        check (pc::enabled(), "PCC ligado no build (URL + chave pública)");
+        check (pc::looksLikeKey ("LDX-AB12-CD34-EF56") && pc::looksLikeKey (" ldx-ab12-cd34-ef56 "), "formato de chave reconhecido (espaços e minúsculas aceites)");
+        check (! pc::looksLikeKey ("#Tecnico01") && ! pc::looksLikeKey ("LDX-AB12-CD34"), "senhas normais não vão ao PCC");
+        check (pq::pcc::keyHashOf (pc::normaliseKey ("ldx-ab12-cd34-ef56").toStdString(), "LOUDNEX") == "7b36cd1268108c146424aea656762b25a2d2484d366c910ed4d6c5def7edbd19", "hash da chave igual ao que o servidor calcula");
+        {
+            const auto f = juce::File::getSpecialLocation (juce::File::tempDirectory).getChildFile ("pcc_test.settings");
+            f.deleteFile();
+            juce::PropertiesFile::Options o; o.storageFormat = juce::PropertiesFile::storeAsXML;
+            juce::PropertiesFile pf (f, o);
+            pf.setValue ("pccHash", juce::String::repeatedString ("ab", 32)); pf.setValue ("pccValid", "1"); pf.setValue ("pccRole", "master");
+            pf.setValue ("pccNonce", "00112233445566778899"); pf.setValue ("pccTs", juce::String ((juce::int64) pc::unixNow()));
+            pf.setValue ("pccSig", juce::String::repeatedString ("11", 64));
+            pc::Session s ("LOUDNEX", "teste");
+            check (! s.restore (pf) && ! s.active(), "licença guardada com assinatura falsa é recusada");
+            f.deleteFile();
+        }
+        pc::Check c; c.outcome = pc::Outcome::Invalid; c.message = juce::String (juce::CharPointer_UTF8 ("Licen\xc3\xa7" "a expirada em 2026-01-01."));
+        check (pc::uiText (c, false).contains ("expirada") && pc::uiText (c, true).contains ("expired"), "mensagens do PCC em PT e EN");
+        c.message = juce::String (juce::CharPointer_UTF8 ("Licen\xc3\xa7" "a inv\xc3\xa1lida."));
+        check (pc::uiText (c, true) == "Incorrect password or licence.", "chave desconhecida: mensagem normal");
+        AccessManager::get().logout();
+        check (AccessManager::get().applyOnline (c, false) == AccessManager::LoginResult::Online && ! AccessManager::get().onlineLicence(), "chave recusada pelo PCC não desbloqueia o plugin");
+        c.outcome = pc::Outcome::Unreachable;
+        check (pc::uiText (c, false).contains ("internet"), "sem rede: pede para verificar a internet");
+        AccessManager::get().applyLogin ({ 0, false }, false);
+    }
+
     // 3) latência constante em todas as combinações
     auto latencyOf = [&] (int mode, int os, int tp, float la)
     {

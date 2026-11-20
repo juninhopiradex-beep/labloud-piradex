@@ -2,7 +2,7 @@
 [Setup]
 AppId={{6C1F6B7A-2E54-4B8E-9A3C-5D0A1B2C3D4E}
 AppName=LABLOUD by Piradex
-AppVersion=0.2.0
+AppVersion=0.3.0
 AppPublisher=Piradex
 AppPublisherURL=https://www.beatfreakstudio.com
 DefaultDirName={autopf}\Piradex\LABLOUD
@@ -21,5 +21,5 @@ WizardStyle=modern
 Source: "..\build\Loudnex_artefacts\Release\VST3\LABLOUD by Piradex.vst3\*"; DestDir: "{commoncf64}\VST3\LABLOUD by Piradex.vst3"; Flags: recursesubdirs createallsubdirs ignoreversion
 
 [Messages]
-WelcomeLabel2=Este assistente vai instalar o LABLOUD by Piradex no teu sistema.%n%nProfessional Audio Plugin | Beatfreak Music%nCriador e Desenvolvedor: Ricardo Amorim / Juninho Piradex%nVersao 0.2.0
+WelcomeLabel2=Este assistente vai instalar o LABLOUD by Piradex no teu sistema.%n%nProfessional Audio Plugin | Beatfreak Music%nCriador e Desenvolvedor: Ricardo Amorim / Juninho Piradex%nVersao 0.3.0
 FinishedLabel=O LABLOUD by Piradex foi instalado na pasta VST3 do sistema. Reinicie o seu DAW e faça um novo scan de plugins.
