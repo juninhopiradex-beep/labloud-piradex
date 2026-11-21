@@ -153,7 +153,7 @@ jobs:
           set -e
           choco install innosetup -y --no-progress || true
           ISCC="/c/Program Files (x86)/Inno Setup 6/ISCC.exe"
-          "$ISCC" "/DVersao=$VERSAO" installer/labloud.iss
+          "$ISCC" "-DVersao=$VERSAO" installer/labloud.iss   # "-D" e nao "/D": o bash do Windows trocaria /D por um caminho
           mkdir out && cp -R build/Loudnex_artefacts/Release/VST3 out/
           (cd out && 7z a "../LABLOUD-by-Piradex-$VERSAO-Windows-VST3.zip" .)
           ls -la *.exe *.zip

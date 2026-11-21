@@ -1,5 +1,5 @@
 ; Instalador Windows — LABLOUD by Piradex (VST3, 64 bits)
-; Compilado no GitHub Actions: ISCC /DVersao=0.3.0 installer\labloud.iss
+; Compilado no GitHub Actions: ISCC -DVersao=0.3.0 installer\labloud.iss
 #ifndef Versao
   #define Versao "0.3.0"
 #endif
