@@ -1,39 +1,128 @@
-name: build
+name: Build LABLOUD by Piradex (macOS universal + Windows)
+
 on:
-  workflow_dispatch:
   push:
-    tags: ['v*']
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  VERSAO: "0.3.0"
+  NOME: "LABLOUD by Piradex"
 
 jobs:
-  macos:
-    runs-on: macos-15  # o macos-14 deixou de existir no GitHub Actions
+  testes:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Testes do núcleo (DSP, laudo PDF, motor, assistentes, senhas)
+        run: |
+          # o test_licensing usa senhas de teste: gera um Secrets.h só para o teste (o do plugin não muda)
+          mkdir -p /tmp/sec && python3 tools/gen_secrets.py --out /tmp/sec --master TestMaster-123 --beta TestBeta-456
+          for t in test_dsp test_pdf test_engine test_assist test_licensing; do
+            g++ -O2 -std=c++20 -I/tmp/sec/Source -ISource -Itests "tests/$t.cpp" -o "$t"
+            echo "== $t"; ./"$t" | tail -n 3
+          done
+
+  macos:
+    needs: testes
+    runs-on: macos-15  # o macos-14 deixou de existir no GitHub Actions
+    env:
+      ART: build/Loudnex_artefacts/Release
+    steps:
+      - uses: actions/checkout@v4
+
       - name: Escolher um Xcode que ainda gera binarios para macOS 10.13 (o Xcode 26 sobe o minimo para 11.0)
         run: |
           ls -d /Applications/Xcode_*.app
           X=$(ls -d /Applications/Xcode_16*.app /Applications/Xcode_15*.app 2>/dev/null | sort -V | tail -1)
           if [ -z "$X" ]; then echo "::error::Nenhum Xcode 15/16 disponivel: o plugin nao correria no macOS Catalina"; exit 1; fi
           sudo xcode-select -s "$X"; xcodebuild -version
-      - name: Configurar (universal arm64 + x86_64)
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET=10.13
+
+      - name: Configurar (universal Intel + Apple Silicon, macOS 10.13+)
+        run: >
+          cmake -B build -G Xcode
+          -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+          -DCMAKE_OSX_DEPLOYMENT_TARGET=10.13
+
       - name: Compilar VST3 + AU
-        run: cmake --build build --config Release --target Loudnex_VST3 Loudnex_AU -j 4
-      - name: Instalador .pkg
+        run: cmake --build build --config Release --target Loudnex_VST3 Loudnex_AU -- -quiet
+
+      - name: Verificar arquiteturas e versão mínima do macOS
         run: |
-          set -e
-          S=stage; V="$S/Library/Audio/Plug-Ins/VST3"; A="$S/Library/Audio/Plug-Ins/Components"
-          mkdir -p "$V" "$A"
-          cp -R build/Loudnex_artefacts/Release/VST3/*.vst3 "$V/"
-          cp -R build/Loudnex_artefacts/Release/AU/*.component "$A/"
-          for b in "$V"/*.vst3 "$A"/*.component; do codesign --force --deep -s - "$b"; done
-          pkgbuild --root "$S" --identifier com.piradex.labloud.pkg --version 0.3.0 --install-location / --ownership recommended labloud-component.pkg
-          productbuild --distribution installer/distribution.xml --resources installer --package-path . LABLOUD-macOS.pkg
-          (cd "$S/Library/Audio/Plug-Ins" && zip -qr "$OLDPWD/LABLOUD-macOS.zip" .)
+          for b in "$ART/VST3/$NOME.vst3/Contents/MacOS/$NOME" "$ART/AU/$NOME.component/Contents/MacOS/$NOME"; do
+            echo "== $b"
+            archs=$(lipo -archs "$b"); echo "arquiteturas: $archs"
+            [[ "$archs" == *x86_64* && "$archs" == *arm64* ]] || { echo "FALTA uma arquitetura"; exit 1; }
+            minos=$(otool -arch x86_64 -l "$b" | awk '/LC_VERSION_MIN_MACOSX|LC_BUILD_VERSION/{f=1} f&&/(version|minos)/{print $2; exit}')
+            echo "macOS mínimo (Intel): $minos"
+            [[ "$minos" == "10.13" ]] || { echo "Versão mínima inesperada"; exit 1; }
+          done
+
+      - name: Assinar ad-hoc
+        run: |
+          codesign --force --deep -s - "$ART/VST3/$NOME.vst3"
+          codesign --force --deep -s - "$ART/AU/$NOME.component"
+
+      - name: Validar Audio Unit (auval, Apple Silicon e Intel/Rosetta)
+        run: |
+          mkdir -p ~/Library/Audio/Plug-Ins/Components
+          cp -R "$ART/AU/$NOME.component" ~/Library/Audio/Plug-Ins/Components/
+          killall -9 AudioComponentRegistrar || true
+          sleep 3
+          auval -a | grep -i piradex || true
+          auval -v aufx PxLB Prdx
+          softwareupdate --install-rosetta --agree-to-license || true
+          arch -x86_64 auval -v aufx PxLB Prdx
+
+      - name: Validar com pluginval (VST3)
+        continue-on-error: true
+        run: |
+          curl -sSL -o pluginval.zip https://github.com/Tracktion/pluginval/releases/latest/download/pluginval_macOS.zip
+          unzip -q pluginval.zip
+          set -o pipefail
+          pluginval.app/Contents/MacOS/pluginval --strictness-level 5 --timeout-ms 300000 \
+            --validate "$ART/VST3/$NOME.vst3" 2>&1 | tee pluginval-macOS.log
+
+      - name: Criar instalador .pkg e .dmg
+        run: |
+          mkdir -p root/Library/Audio/Plug-Ins/VST3 root/Library/Audio/Plug-Ins/Components
+          cp -R "$ART/VST3/$NOME.vst3" root/Library/Audio/Plug-Ins/VST3/
+          cp -R "$ART/AU/$NOME.component" root/Library/Audio/Plug-Ins/Components/
+          # instala sempre os bundles (sem comparar versões com o que já existe)
+          pkgbuild --analyze --root root components.plist
+          plutil -replace 0.BundleIsVersionChecked -bool NO components.plist || true
+          plutil -replace 1.BundleIsVersionChecked -bool NO components.plist || true
+          plutil -replace 0.BundleIsRelocatable -bool NO components.plist || true
+          plutil -replace 1.BundleIsRelocatable -bool NO components.plist || true
+          pkgbuild --root root --component-plist components.plist --identifier com.piradex.labloud.pkg --version "$VERSAO" \
+                   --install-location / --ownership recommended labloud-component.pkg
+          productbuild --distribution installer/distribution.xml --resources installer --package-path . "$NOME.pkg"
+          mkdir -p "dmg/Plugins"
+          cp "$NOME.pkg" installer/LEIA-ME.txt dmg/
+          cp -R "$ART/VST3/$NOME.vst3" "$ART/AU/$NOME.component" dmg/Plugins/
+          # HFS+ (e não APFS): abre em todos os Macs desde o 10.13, incluindo o Catalina
+          hdiutil create -volname "$NOME" -srcfolder dmg -fs HFS+ -ov -format UDZO "LABLOUD-by-Piradex-$VERSAO-macOS.dmg"
+          hdiutil verify "LABLOUD-by-Piradex-$VERSAO-macOS.dmg"
+          # alternativa sem imagem de disco: o .pkg num .zip
+          mkdir -p pkgzip && cp "$NOME.pkg" installer/LEIA-ME.txt pkgzip/
+          ditto -c -k --sequesterRsrc pkgzip "LABLOUD-by-Piradex-$VERSAO-macOS-Instalador.zip"
+          ls -la *.pkg *.dmg *.zip
+
       - uses: actions/upload-artifact@v4
-        with: { name: LABLOUD-macOS, path: "LABLOUD-macOS.pkg\nLABLOUD-macOS.zip" }
+        with:
+          name: macos
+          path: |
+            LABLOUD-by-Piradex-*-macOS.dmg
+            LABLOUD-by-Piradex-*-macOS-Instalador.zip
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pluginval-macos
+          path: pluginval-macOS.log
 
   windows:
+    needs: testes
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -51,16 +140,55 @@ jobs:
           cmake --build build --config Release --target Loudnex_VST3 -j 4 > bld.log 2>&1; rc=$?
           tail -n 60 bld.log
           if [ $rc -ne 0 ]; then echo "::error::BUILD: $(grep -i -m3 'error' bld.log | tr '\n\r' '  ' | cut -c1-900)"; exit $rc; fi
-      - name: Instalador .exe (Inno Setup)
+      - name: Validar com pluginval (VST3)
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri https://github.com/Tracktion/pluginval/releases/latest/download/pluginval_Windows.zip -OutFile pluginval.zip
+          Expand-Archive pluginval.zip -DestinationPath pv
+          .\pv\pluginval.exe --strictness-level 5 --timeout-ms 300000 --validate "build\Loudnex_artefacts\Release\VST3\LABLOUD by Piradex.vst3" | Tee-Object -FilePath pluginval-Windows.log
+      - name: Instalador .exe (Inno Setup) e .zip
         shell: bash
         run: |
           set -e
           choco install innosetup -y --no-progress || true
           ISCC="/c/Program Files (x86)/Inno Setup 6/ISCC.exe"
-          "$ISCC" installer/labloud.iss
+          "$ISCC" "/DVersao=$VERSAO" installer/labloud.iss
           mkdir out && cp -R build/Loudnex_artefacts/Release/VST3 out/
-          (cd out && 7z a ../LABLOUD-Windows.zip .)
+          (cd out && 7z a "../LABLOUD-by-Piradex-$VERSAO-Windows-VST3.zip" .)
+          ls -la *.exe *.zip
       - uses: actions/upload-artifact@v4
-        with: { name: LABLOUD-Windows, path: "LABLOUD-Setup-Windows.exe\nLABLOUD-Windows.zip" }
+        with:
+          name: windows
+          path: |
+            LABLOUD-by-Piradex-*-Windows-Setup.exe
+            LABLOUD-by-Piradex-*-Windows-VST3.zip
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pluginval-windows
+          path: pluginval-Windows.log
 
   # AAX: precisa do SDK da Avid e da assinatura PACE/iLok (segredos próprios). Não está ativo aqui.
+
+  publicar:
+    needs: [macos, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Publicar versão (macOS + Windows)
+        run: |
+          ls -la dist
+          TAG="v$VERSAO"
+          gh release delete "$TAG" -y --cleanup-tag -R "$GITHUB_REPOSITORY" || true
+          gh release create "$TAG" dist/*.dmg dist/*.zip dist/*.exe -R "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" --title "$NOME $VERSAO" \
+            --notes "Limiter + Clipper + Hybrid. Novo na $VERSAO: chaves de licença validadas online (PCC); a master e as senhas beta continuam a funcionar como antes. macOS 10.13+ (um só instalador para Macs Intel antigos e Apple Silicon, VST3 + AU): LABLOUD-by-Piradex-$VERSAO-macOS.dmg · Windows 10/11 64 bits (VST3): LABLOUD-by-Piradex-$VERSAO-Windows-Setup.exe (ou o .zip para instalação manual)."

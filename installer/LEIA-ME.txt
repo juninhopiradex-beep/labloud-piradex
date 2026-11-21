@@ -1,0 +1,14 @@
+LABLOUD by Piradex — instalação no Mac
+======================================
+
+1) Abra o "LABLOUD by Piradex.pkg" e siga os passos (instala VST3 e Audio Unit).
+   Se o macOS disser que não pode abrir o instalador: clique com o botão direito no .pkg > Abrir > Abrir.
+2) Reinicie o DAW e faça um novo scan de plugins.
+3) Ao abrir o plugin escreva a senha master, uma senha beta ou a sua chave de licença (LDX-XXXX-XXXX-XXXX).
+
+Alternativa manual: copie a pasta "Plugins" deste disco:
+   LABLOUD by Piradex.vst3       -> /Library/Audio/Plug-Ins/VST3
+   LABLOUD by Piradex.component  -> /Library/Audio/Plug-Ins/Components
+
+Funciona em macOS 10.13 ou mais recente, Macs Intel e Apple Silicon.
+Suporte: juninhopiradex@hotmail.com · www.beatfreakstudio.com

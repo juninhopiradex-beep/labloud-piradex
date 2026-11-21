@@ -1,8 +1,12 @@
 ; Instalador Windows — LABLOUD by Piradex (VST3, 64 bits)
+; Compilado no GitHub Actions: ISCC /DVersao=0.3.0 installer\labloud.iss
+#ifndef Versao
+  #define Versao "0.3.0"
+#endif
 [Setup]
 AppId={{6C1F6B7A-2E54-4B8E-9A3C-5D0A1B2C3D4E}
 AppName=LABLOUD by Piradex
-AppVersion=0.3.0
+AppVersion={#Versao}
 AppPublisher=Piradex
 AppPublisherURL=https://www.beatfreakstudio.com
 DefaultDirName={autopf}\Piradex\LABLOUD
@@ -12,7 +16,7 @@ PrivilegesRequired=admin
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir=..
-OutputBaseFilename=LABLOUD-Setup-Windows
+OutputBaseFilename=LABLOUD-by-Piradex-{#Versao}-Windows-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
@@ -21,5 +25,5 @@ WizardStyle=modern
 Source: "..\build\Loudnex_artefacts\Release\VST3\LABLOUD by Piradex.vst3\*"; DestDir: "{commoncf64}\VST3\LABLOUD by Piradex.vst3"; Flags: recursesubdirs createallsubdirs ignoreversion
 
 [Messages]
-WelcomeLabel2=Este assistente vai instalar o LABLOUD by Piradex no teu sistema.%n%nProfessional Audio Plugin | Beatfreak Music%nCriador e Desenvolvedor: Ricardo Amorim / Juninho Piradex%nVersao 0.3.0
+WelcomeLabel2=Este assistente vai instalar o LABLOUD by Piradex no teu sistema.%n%nProfessional Audio Plugin | Beatfreak Music%nCriador e Desenvolvedor: Ricardo Amorim / Juninho Piradex%nVersao {#Versao}
 FinishedLabel=O LABLOUD by Piradex foi instalado na pasta VST3 do sistema. Reinicie o seu DAW e faça um novo scan de plugins.
