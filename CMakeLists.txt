@@ -8,7 +8,7 @@ endif()
 # Windows: runtime do Visual C++ embutido (não precisa do "VC++ Redistributable")
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
-project(LABLOUD VERSION 0.5.0 LANGUAGES C CXX)
+project(LABLOUD VERSION 1.0.1 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -33,10 +33,13 @@ elseif(WIN32)
 else()
     set(LX_FORMATS VST3 Standalone)   # Linux: só desenvolvimento/testes
 endif()
+# AAX (Pro Tools): a JUCE 8 ja traz o SDK do AAX, por isso compila sempre em macOS e Windows.
+# O Pro Tools normal so o carrega depois de assinado com PACE/iLok (wraptool); sem isso serve no Pro Tools Developer.
 if(DEFINED AAX_SDK_PATH AND EXISTS "${AAX_SDK_PATH}")
     juce_set_aax_sdk_path("${AAX_SDK_PATH}")
+endif()
+if(APPLE OR WIN32)
     list(APPEND LX_FORMATS AAX)
-    message(STATUS "AAX ativado (SDK em ${AAX_SDK_PATH})")
 endif()
 
 juce_add_plugin(Loudnex

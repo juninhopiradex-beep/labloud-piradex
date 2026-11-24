@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  VERSAO: "0.5.0"
+  VERSAO: "1.0.1"
   NOME: "LABLOUD by Piradex"
 
 jobs:
@@ -37,6 +37,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: pkgbuild sem verificacao de versao (a 1.0.1 instala por cima de versoes com numero maior)
+        working-directory: ${{ github.workspace }}
+        run: chmod +x ci/pkgbuild && echo "${{ github.workspace }}/ci" >> "$GITHUB_PATH"
       - name: Escolher um Xcode que ainda gera binarios para macOS 10.13 (o Xcode 26 sobe o minimo para 11.0)
         run: |
           ls -d /Applications/Xcode_*.app
@@ -114,12 +117,43 @@ jobs:
           ditto -c -k --sequesterRsrc pkgzip "LABLOUD-by-Piradex-$VERSAO-macOS-Instalador.zip"
           ls -la *.pkg *.dmg *.zip
 
+      - name: AAX (Pro Tools) - compilar, assinar e empacotar
+        env:
+          PACE_ACCOUNT: ${{ secrets.PACE_ACCOUNT }}
+          PACE_PASSWORD: ${{ secrets.PACE_PASSWORD }}
+          PACE_WCGUID: ${{ secrets.PACE_WCGUID }}
+          PACE_EDEN_URL: ${{ secrets.PACE_EDEN_URL }}
+        run: |
+          set -e
+          cmake --build build --config Release --target Loudnex_AAX -- -quiet
+          A=$(find build -name "*.aaxplugin" -type d -prune | head -1)
+          [ -n "$A" ] || { echo "::error::AAX nao encontrado"; exit 1; }
+          rm -rf aax-out && mkdir -p aax-out && cp -R "$A" aax-out/
+          B="aax-out/$(basename "$A")"
+          lipo -archs "$B/Contents/MacOS/"*
+          codesign --force --deep -s - "$B"
+          SUF=nao-assinado
+          if [ -n "$PACE_ACCOUNT" ] && [ -n "$PACE_EDEN_URL" ]; then
+            curl -sSL -o eden.dmg "$PACE_EDEN_URL"
+            hdiutil attach -nobrowse -mountpoint /Volumes/Eden eden.dmg
+            sudo installer -pkg /Volumes/Eden/*.pkg -target /
+            W="/Applications/PACEAntiPiracy/Eden/Fusion/Current/bin/wraptool"
+            "$W" sign --verbose --account "$PACE_ACCOUNT" --password "$PACE_PASSWORD" --wcguid "$PACE_WCGUID" --dsig1-compat off --in "$B" --out "$B"
+            "$W" verify --verbose --in "$B"
+            SUF=assinado
+          fi
+          cp LEIA-ME-AAX.txt aax-out/
+          V=$(grep -m1 -oE 'project\([^)]*VERSION [0-9]+\.[0-9]+\.[0-9]+' CMakeLists.txt | grep -oE '[0-9]+\.[0-9]+\.[0-9]+$')
+          ditto -c -k --sequesterRsrc aax-out "LABLOUD-by-Piradex-$V-macOS-AAX-$SUF.zip"
+          ls -la *-AAX-*.zip
+
       - uses: actions/upload-artifact@v4
         with:
           name: macos
           path: |
             LABLOUD-by-Piradex-*-macOS.dmg
             LABLOUD-by-Piradex-*-macOS-Instalador.zip
+            LABLOUD-by-Piradex-*-AAX-*.zip
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -163,19 +197,50 @@ jobs:
           mkdir out && cp -R build/Loudnex_artefacts/Release/VST3 out/
           (cd out && 7z a "../LABLOUD-by-Piradex-$VERSAO-Windows-VST3.zip" .)
           ls -la *.exe *.zip
+      - name: AAX (Pro Tools) - compilar e empacotar
+        shell: pwsh
+        env:
+          PACE_ACCOUNT: ${{ secrets.PACE_ACCOUNT }}
+          PACE_PASSWORD: ${{ secrets.PACE_PASSWORD }}
+          PACE_WCGUID: ${{ secrets.PACE_WCGUID }}
+          PACE_EDEN_WIN_URL: ${{ secrets.PACE_EDEN_WIN_URL }}
+          PACE_KEYFILE_B64: ${{ secrets.PACE_KEYFILE_B64 }}
+          PACE_KEYPASSWORD: ${{ secrets.PACE_KEYPASSWORD }}
+        run: |
+          cmake --build build --config Release --target Loudnex_AAX
+          if ($LASTEXITCODE -ne 0) { throw "AAX falhou a compilar" }
+          $a = Get-ChildItem -Path build -Recurse -Directory -Filter "*.aaxplugin" | Where-Object { $_.FullName -notmatch '\\Contents\\' } | Select-Object -First 1
+          if (-not $a) { throw "AAX nao encontrado" }
+          $suf = "nao-assinado"
+          if ($env:PACE_ACCOUNT -and $env:PACE_EDEN_WIN_URL) {
+            Invoke-WebRequest -Uri $env:PACE_EDEN_WIN_URL -OutFile eden.exe
+            Start-Process -Wait -FilePath .\eden.exe -ArgumentList "/quiet"
+            [IO.File]::WriteAllBytes("pace.p12", [Convert]::FromBase64String($env:PACE_KEYFILE_B64))
+            $wrap = Get-ChildItem "${env:ProgramFiles(x86)}\PACEAntiPiracy" -Recurse -Filter wraptool.exe | Select-Object -First 1
+            & $wrap.FullName sign --verbose --account $env:PACE_ACCOUNT --password $env:PACE_PASSWORD --wcguid $env:PACE_WCGUID `
+              --keyfile pace.p12 --keypassword $env:PACE_KEYPASSWORD --in $a.FullName --out $a.FullName
+            if ($LASTEXITCODE -ne 0) { throw "wraptool falhou" }
+            Remove-Item pace.p12
+            $suf = "assinado"
+          }
+          $v = (Select-String -Path CMakeLists.txt -Pattern 'project\([^)]*VERSION ([0-9]+\.[0-9]+\.[0-9]+)' | Select-Object -First 1).Matches[0].Groups[1].Value
+          Compress-Archive -Path $a.FullName, LEIA-ME-AAX.txt -DestinationPath "LABLOUD-by-Piradex-$v-Windows-AAX-$suf.zip" -Force
+          Get-ChildItem *-AAX-*.zip
+
       - uses: actions/upload-artifact@v4
         with:
           name: windows
           path: |
             LABLOUD-by-Piradex-*-Windows-Setup.exe
             LABLOUD-by-Piradex-*-Windows-VST3.zip
+            LABLOUD-by-Piradex-*-AAX-*.zip
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: pluginval-windows
           path: pluginval-Windows.log
 
-  # AAX: precisa do SDK da Avid e da assinatura PACE/iLok (segredos próprios). Não está ativo aqui.
+  # AAX: compilado com o SDK incluido na JUCE 8; assinado com PACE so quando os segredos PACE_* existirem.
 
   publicar:
     needs: [macos, windows]
@@ -197,4 +262,4 @@ jobs:
           gh release delete "$TAG" -y --cleanup-tag -R "$GITHUB_REPOSITORY" || true
           gh release create "$TAG" dist/*.dmg dist/*.zip dist/*.exe -R "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" --title "$NOME $VERSAO" \
-            --notes "Limiter + Clipper + Hybrid. Novo na $VERSAO: chaves de licença validadas online (PCC); a master e as senhas beta continuam a funcionar como antes. macOS 10.13+ (um só instalador para Macs Intel antigos e Apple Silicon, VST3 + AU): LABLOUD-by-Piradex-$VERSAO-macOS.dmg · Windows 10/11 64 bits (VST3): LABLOUD-by-Piradex-$VERSAO-Windows-Setup.exe (ou o .zip para instalação manual)."
+            --notes "Versao 1.0.1: login obrigatorio desde ja (senha master, senha beta valida ate 31/12/2026 ou chave de licenca validada online pelo PCC). Limiter + Clipper + Hybrid. Novo na $VERSAO: chaves de licença validadas online (PCC); a master e as senhas beta continuam a funcionar como antes. macOS 10.13+ (um só instalador para Macs Intel antigos e Apple Silicon, VST3 + AU): LABLOUD-by-Piradex-$VERSAO-macOS.dmg · Windows 10/11 64 bits (VST3): LABLOUD-by-Piradex-$VERSAO-Windows-Setup.exe (ou o .zip para instalação manual)."

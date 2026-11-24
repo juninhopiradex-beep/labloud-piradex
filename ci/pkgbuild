@@ -1,0 +1,34 @@
+#!/bin/bash
+# Envolve o pkgbuild da Apple: os plugins instalados por cima de uma versao com numero MAIOR (ex.: 2.2.0 -> 1.0.1)
+# seriam ignorados em silencio pelo instalador do macOS (BundleIsVersionChecked). Este wrapper desliga essa verificacao.
+REAL=/usr/bin/pkgbuild
+args=("$@"); root=""; has_plist=0; analyze=0
+for ((i=0; i<${#args[@]}; i++)); do
+  case "${args[$i]}" in
+    --root) root="${args[$((i+1))]}";;
+    --component-plist) has_plist=1;;
+    --analyze) analyze=1;;
+  esac
+done
+if [ "$analyze" = 1 ]; then
+  "$REAL" "$@" || exit $?
+  plist="${args[${#args[@]}-1]}"
+  /usr/libexec/PlistBuddy -c "Print" "$plist" >/dev/null 2>&1 || exit 0
+  n=$(/usr/libexec/PlistBuddy -c "Print" "$plist" | grep -c "RootRelativeBundlePath")
+  for ((k=0; k<n; k++)); do
+    /usr/libexec/PlistBuddy -c "Set :$k:BundleIsVersionChecked false" "$plist" 2>/dev/null
+    /usr/libexec/PlistBuddy -c "Set :$k:BundleOverwriteAction upgrade" "$plist" 2>/dev/null
+  done
+  exit 0
+fi
+if [ -n "$root" ] && [ "$has_plist" = 0 ]; then
+  plist=$(mktemp -t comp).plist
+  "$REAL" --analyze --root "$root" "$plist" >/dev/null
+  n=$(/usr/libexec/PlistBuddy -c "Print" "$plist" 2>/dev/null | grep -c "RootRelativeBundlePath")
+  for ((k=0; k<n; k++)); do
+    /usr/libexec/PlistBuddy -c "Set :$k:BundleIsVersionChecked false" "$plist"
+    /usr/libexec/PlistBuddy -c "Set :$k:BundleOverwriteAction upgrade" "$plist"
+  done
+  exec "$REAL" --component-plist "$plist" "$@"
+fi
+exec "$REAL" "$@"

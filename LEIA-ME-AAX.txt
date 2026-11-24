@@ -1,0 +1,16 @@
+LABLOUD by Piradex — AAX (Pro Tools)
+
+Onde instalar a pasta "LABLOUD by Piradex.aaxplugin" (o nome exato da pasta dentro do .zip):
+  macOS:   /Library/Application Support/Avid/Audio/Plug-Ins/
+  Windows: C:\Program Files\Common Files\Avid\Audio\Plug-Ins\
+
+IMPORTANTE — assinatura PACE:
+  • Ficheiro "...-AAX-assinado.zip": funciona no Pro Tools normal (Artist, Studio, Ultimate).
+  • Ficheiro "...-AAX-nao-assinado.zip": o Pro Tools normal NÃO o carrega.
+    Só funciona no Pro Tools Developer (versão para programadores da Avid),
+    para testes, até o plugin ser assinado com as ferramentas da PACE (wraptool).
+
+No Pro Tools o LABLOUD aparece na lista de plugins como LABLOUD (fabricante: Piradex).
+Na primeira vez que abrir o plugin, introduza a senha ou a chave de licença.
+
+Suporte: juninhopiradex@hotmail.com · www.beatfreakstudio.com/loja
