@@ -19,7 +19,7 @@ Núcleo em C++17 puro (`Source/DSP/`), sem dependência do JUCE; o processador (
 
 1. **Teto**: o pico de amostra nunca ultrapassa o teto em nenhuma combinação de modo/rota/M-S/multibanda/oversampling (fuzz: 40 combinações aleatórias, pior caso 1,0005× o teto; esse excesso é o limiar do teste, 0,05 %).
 2. **Pico verdadeiro**: com TP ligado, medido por um medidor independente de 64 taps a 8×, o excesso máximo medido foi 1,036× o teto (≈0,31 dB) em fuzz de limiter puro; nos testes do processador o `TruePeakMeter` ficou em −1,00 dBTP para teto −1 dB. O estimador interno tem erro de ~0,2 dB, não é o filtro normativo da BS.1770.
-3. **Latência constante**: o valor comunicado ao anfitrião é o mesmo em todos os modos, rotas, M/S e estágios de oversampling (419 amostras = 8,73 ms a 48 kHz; 8,98 ms a 44,1 kHz; 6,68 ms a 192 kHz). Mede-se com um impulso e coincide com o reportado (desvio máximo 0 amostras em 32 combinações).
+3. **Latência constante**: o valor comunicado ao anfitrião é o mesmo em todos os modos, rotas, M/S e estágios de oversampling (539 amostras = 11,23 ms a 48 kHz desde a 0.5.0). Mede-se com um impulso e coincide com o reportado (desvio máximo 0 amostras em 32 combinações).
 4. **Tempo real**: 0 alocações (`operator new`) e sem crescimento do heap em `processBlock`, em 11 configurações incluindo o pior caso.
 5. **Entradas inválidas**: NaN/Inf/denormais dão saída finita.
 

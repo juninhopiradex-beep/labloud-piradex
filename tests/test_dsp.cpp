@@ -78,7 +78,7 @@ static void testTruePeak()
     std::printf ("\n[Estimador de pico verdadeiro]\n");
     { // fs/4 a 45 graus: amostras a ±0.7071, pico verdadeiro = 1.0
         TruePeakEstimator tp; double est = 0, smp = 0;
-        for (int i = 0; i < 4000; ++i) { const double x = std::sin (kPi / 2 * i + kPi / 4); smp = std::max (smp, std::fabs (x)); const double p = tp.push (x, true); if (i > 50) est = std::max (est, p); }
+        for (int i = 0; i < 4000; ++i) { const double x = std::sin (kPi / 2 * i + kPi / 4); smp = std::max (smp, std::fabs (x)); const double p = tp.push (x, true); if (i > 2 * TruePeakEstimator::kTaps) est = std::max (est, p); }
         const double errDb = 20 * std::log10 (est / 1.0);
         CHECK (std::fabs (smp - 0.70710678) < 1e-6, "pico de amostra = %.4f (0.7071 esperado)", smp);
         CHECK (std::fabs (errDb) < 0.05, "pico verdadeiro estimado = %.4f (erro %+.3f dB, esperado 1.0000)", est, errDb);
@@ -91,7 +91,7 @@ static void testTruePeak()
         for (int ph = 0; ph < 16; ++ph)
         {
             TruePeakEstimator tp; double est = 0;
-            for (int i = 0; i < 6000; ++i) { const double p = tp.push (std::sin (2 * kPi * fr * i + ph * kPi / 16), true); if (i > 50) est = std::max (est, p); }
+            for (int i = 0; i < 6000; ++i) { const double p = tp.push (std::sin (2 * kPi * fr * i + ph * kPi / 16), true); if (i > 2 * TruePeakEstimator::kTaps) est = std::max (est, p); }
             bestErr = std::max (bestErr, std::fabs (20 * std::log10 (est)));
         }
         if (bestErr > worst) { worst = bestErr; worstF = fr; }

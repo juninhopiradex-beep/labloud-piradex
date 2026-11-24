@@ -113,13 +113,14 @@ int main()
             const int from = (int) fs;                                   // ignora o primeiro segundo (arranque)
             const double ideal = std::max (idealTruePeakDb (s.l, from), idealTruePeakDb (s.r, from)), ebu = ebuTruePeakDb (s.l, s.r, fs, from);
             worst = std::max (worst, ideal);
-            // tons e varrimentos: erro <= 0,25 dB. Programa com muito ruido perto de Nyquist (hats sem filtro): a modulacao de
-            // ganho cria ~0,3 dB de pico entre amostras que o detetor nao ve (limite conhecido, ver docs/VALIDACAO.md) -> 0,5 dB.
-            const double tol = std::string (s.name).find ("programa") != std::string::npos ? 0.5 : 0.25;
+            // 0.5: estimador de 128 taps -> tambem o programa com muito ruido perto de Nyquist fica dentro de 0,25 dB
+            // (com o estimador antigo de 48 taps passava ~0,3 dB).
+            const double tol = 0.25;
             CHECK (ideal <= -1.0 + tol, "%5.1f kHz  %-24s ideal 32x: %+.2f dBTP   (libebur128 4x: %+.2f)   tolerancia %.2f dB", fs / 1000, s.name, ideal, ebu, tol);
         }
     }
     std::printf ("\nPior pico verdadeiro (interpolador ideal): %+.2f dBTP para teto -1,0 (tolerância 0,25 dB)\n", worst);
+    CHECK (worst <= -1.0 + 0.15, "pior caso em todo o material: excesso <= 0,15 dB (%.2f dB)", worst + 1.0);
 
     std::printf ("\n[3. Sanidade da referência]\n");
     {

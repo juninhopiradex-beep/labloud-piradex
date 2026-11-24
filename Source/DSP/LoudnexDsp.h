@@ -2,7 +2,7 @@
 //  LABLOUD by Piradex — núcleo DSP (C++17 puro, sem JUCE, testável na linha de comandos)
 //
 //  Conteúdo:
-//    TruePeakEstimator  estimador de pico verdadeiro 8x (FIR sinc com janela Blackman, 48 taps por fase)
+//    TruePeakEstimator  estimador de pico verdadeiro 8x (FIR sinc com janela de Kaiser, 128 taps por fase)
 //    SlidingMin         mínimo deslizante em O(1) (deque monótona)
 //    Boxcar             média móvel em O(1)
 //    Limiter            limitador "brickwall" com lookahead, release de dois estágios e bass guard
@@ -85,7 +85,7 @@ inline double clipCurve (double u, ClipShape s, double knee, double cexp = 4.0, 
 class TruePeakEstimator
 {
 public:
-    static constexpr int kTaps = 48;
+    static constexpr int kTaps = 128;    // 0.5: 128 taps (antes 48) - com 48 o filtro perdia picos de conteudo perto de Nyquist (~0,3 dB)
     static constexpr int kPhases = 7;       // 8x: fases 1/8 .. 7/8
     static constexpr int kCenter = kTaps / 2 - 1;
     static constexpr int kDelay = kTaps - 1 - kCenter;   // o valor devolvido refere-se à amostra empurrada há kDelay passos
@@ -116,6 +116,7 @@ public:
 
 private:
     double buf[2 * kTaps]; int idx = 0;
+    static double besselI0 (double v) { double a = 1.0, t = 1.0; for (int k = 1; k < 40; ++k) { t *= (v / (2 * k)) * (v / (2 * k)); a += t; } return a; }
     static const std::array<std::array<double, kTaps>, kPhases>& coeffs()
     {
         static const std::array<std::array<double, kTaps>, kPhases> table = []
@@ -128,7 +129,7 @@ private:
                 {
                     const double x = j - kCenter - f, u = x / (kTaps / 2);
                     const double sinc = std::fabs (x) < 1e-12 ? 1.0 : std::sin (kPi * x) / (kPi * x);
-                    const double win = 0.42 + 0.5 * std::cos (kPi * u) + 0.08 * std::cos (2.0 * kPi * u);
+                    const double win = std::fabs (u) <= 1.0 ? besselI0 (8.0 * std::sqrt (1.0 - u * u)) / besselI0 (8.0) : 0.0;   // Kaiser beta 8
                     t[(size_t) p][(size_t) j] = sinc * win; sum += sinc * win;
                 }
                 for (int j = 0; j < kTaps; ++j) t[(size_t) p][(size_t) j] /= sum;   // ganho DC = 1

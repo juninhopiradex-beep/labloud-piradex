@@ -1,5 +1,10 @@
 # Changelog — LABLOUD by Piradex
 
+## 0.5.0 (24/11/2026)
+
+* **Pico verdadeiro mais exato:** o estimador passou de 48 para 128 taps (janela de Kaiser). Em material com muita energia perto de Nyquist (hats sem filtro, ruído), o teto de pico verdadeiro passava ~0,3 dB; agora fica a ≤ 0,09 dB, medido contra um interpolador ideal independente (`tests/test_ebur128.cpp`, tolerância apertada para 0,25 dB em todo o material). O medidor TRUE PEAK da interface fica igualmente mais exato.
+* Latência constante passa de 419 para 539 amostras (11,23 ms a 48 kHz), igual em todos os modos (o DAW compensa automaticamente). CPU do Limiter +~1,8 %.
+
 ## 0.4.0 (auditoria 24/11/2026)
 
 * **Interface completa:** Alvo LUFS (Off / −23 / −16 / −14 / −9 / −7) e Clip Assist passam a ter controlo na página Assistentes · Delta → Sistema (antes só se mexiam pelo DAW).

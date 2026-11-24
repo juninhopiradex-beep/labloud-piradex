@@ -27,7 +27,7 @@ Compilação do núcleo com `-Wall -Wextra`: **0 avisos**.
 |---|---|
 | Teto de pico de amostra | nunca acima do teto em 40 combinações aleatórias de todos os modos/parâmetros (pior caso 1,0005× o teto) e em 7 configurações Hybrid/M-S/multibanda |
 | Pico verdadeiro (TP ligado) | −1,00 dBTP para teto −1 dB a 44,1 / 96 / 192 kHz (medidor interno); limiter puro em fuzz: ≤ 1,036× o teto contra um medidor independente de 64 taps |
-| Latência constante | 419 amostras (8,73 ms @48 kHz) em 32 combinações de modo × rota × M/S × oversampling; 8,98 ms @44,1; 7,36 ms @96; 6,68 ms @192 |
+| Latência constante | 539 amostras (11,23 ms @48 kHz) desde a 0.5.0 (antes 419: o estimador de pico verdadeiro passou de 48 para 128 taps), igual em todos os modos, rotas, M/S e oversampling |
 | Tempo real | **0** alocações (`operator new`) e sem crescimento do heap em `processBlock` em 11 configurações |
 | Entradas inválidas | NaN, ±Inf, 1e30, denormais: saída finita e dentro do teto |
 | Troca AUTO de oversampling | sem descontinuidade (maior passo igual ao dos caminhos fixos) |
@@ -86,10 +86,12 @@ lê até **+0,6 dB a mais** em tons perto de fs/4 (o próprio teste mostra-o), p
 |---|---|---|---|
 | Seno fs/4 a 45° (pior caso clássico) | −1,00 | −1,00 | −1,00 |
 | Varrimento 20 Hz–20 kHz | −0,99 | −0,99 | −1,00 |
-| Programa estéreo com hats **sem filtro** (muito ruído perto de Nyquist) | **−0,70** | **−0,69** | **−0,71** |
+| Programa estéreo com hats **sem filtro** (muito ruído perto de Nyquist) — 0.4.0 (estimador de 48 taps) | −0,70 | −0,69 | −0,71 |
+| O mesmo programa — **0.5.0** (estimador de 128 taps, janela de Kaiser) | **−0,91** | **−0,91** | **−0,91** |
 
-**Conclusão:** o medidor de loudness do LABLOUD é equivalente à referência (≤ 0,01 LU). O teto de pico verdadeiro é exato
-em tons e varrimentos, mas em material com muita energia perto de Nyquist a própria modulação de ganho do limiter cria
-até ~0,3 dB de pico entre amostras que o detetor (que olha para a entrada) não vê. Na prática: para entregar com margem
-garantida a −1,0 dBTP em material muito brilhante, usar teto −1,3 dB ou ligar o Clipper/Hybrid antes do limiter.
-Correção prevista: segunda deteção de pico verdadeiro na saída (custa ~24 amostras de latência).
+**Conclusão (0.5.0):** o medidor de loudness do LABLOUD é equivalente à referência (≤ 0,01 LU). O teto de pico verdadeiro
+fica a ≤ 0,09 dB do teto em todo o material testado, incluindo o caso mais difícil (muita energia perto de Nyquist), que na
+0.4.0 passava ~0,3 dB. A causa era o filtro do estimador (48 taps, janela Blackman): perdia os picos de conteúdo acima de ~0,4 fs.
+Com 128 taps e janela de Kaiser (β = 8) o erro do estimador é 0,000 dB até 0,42 fs. Custo: +120 amostras de latência
+(2,5 ms a 48 kHz) e ~+1,8 % de CPU no modo Limiter. A barreira de segurança que já existia não resolvia o problema
+(medido: igual com e sem ela), porque usava o mesmo estimador.
