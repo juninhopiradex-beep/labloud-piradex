@@ -6,8 +6,8 @@ namespace secrets
 inline constexpr lx::lic::PwEntry kPasswords[] =
 {
     { "master", lx::lic::Role::Master,
-      "acb306f4d78698eb43be9a100b6f9ba1",
-      "320703ba080858ab2e1aaa3c055890ad88f0049c8f1a993d3ee3f814094b10c5", 0, 0, 0 },
+      "e415cd31171475f708ed3b39c94a5bc0",
+      "a8bbbcc96a5235c43d2e0e501d726c48a29542f72e6f806fda8ecaf15f4fae91", 0, 0, 0 },
 
     { "beta-01", lx::lic::Role::Beta,
       "8301db52947ba0e558b0975e1c255a97",

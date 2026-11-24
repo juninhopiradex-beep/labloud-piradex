@@ -1,7 +1,7 @@
 // =============================================================================
 //  Piradex — licenca online pelo PCC (Plugin Control Central, Supabase), igual em todos os plugins.
 //
-//  Ordem no ecra de login: 1) senhas offline (master #Tecnico01 e betas, PBKDF2, sem internet);
+//  Ordem no ecra de login: 1) senhas offline (master e betas, PBKDF2, sem internet);
 //  2) se nao bater e o texto tiver o formato de uma chave (XXX-XXXX-XXXX-XXXX), pergunta ao PCC.
 //  A chave em claro nunca sai do computador: vai sha256(CHAVE|PRODUTO). A resposta vem assinada
 //  com Ed25519 e so e aceite se a assinatura bater com a chave publica embebida no build.
