@@ -116,6 +116,14 @@ jobs:
           mkdir -p pkgzip && cp "$NOME.pkg" installer/LEIA-ME.txt pkgzip/
           ditto -c -k --sequesterRsrc pkgzip "LABLOUD-by-Piradex-$VERSAO-macOS-Instalador.zip"
           ls -la *.pkg *.dmg *.zip
+      - name: Instaladores separados (Mac Apple Silicon e Mac Intel com macOS 10.13 / Catalina ou mais recente)
+        env:
+          SIGN_ID: ${{ secrets.MACOS_SIGN_IDENTITY }}
+          INSTALLER_ID: ${{ secrets.MACOS_INSTALLER_IDENTITY }}
+        run: |
+          V=$(grep -m1 -oE 'project\([^)]*VERSION [0-9]+\.[0-9]+\.[0-9]+' CMakeLists.txt | grep -oE '[0-9]+\.[0-9]+\.[0-9]+$')
+          bash ${{ github.workspace }}/ci/mac-split.sh installer/distribution.xml installer LABLOUD-by-Piradex "$V" "labloud-component.pkg|root|com.piradex.labloud.pkg||/"
+
 
       - name: AAX (Pro Tools) - compilar, assinar e empacotar
         env:
@@ -151,6 +159,8 @@ jobs:
         with:
           name: macos
           path: |
+            LABLOUD-by-Piradex-*-macOS-AppleSilicon.pkg
+            LABLOUD-by-Piradex-*-macOS-Intel-macOS10.13.pkg
             LABLOUD-by-Piradex-*-macOS.dmg
             LABLOUD-by-Piradex-*-macOS-Instalador.zip
             LABLOUD-by-Piradex-*-AAX-*.zip
@@ -265,6 +275,6 @@ jobs:
           ls -la dist
           TAG="v$VERSAO"
           gh release delete "$TAG" -y --cleanup-tag -R "$GITHUB_REPOSITORY" || true
-          gh release create "$TAG" dist/*.dmg dist/*.zip dist/*.exe -R "$GITHUB_REPOSITORY" \
+          gh release create "$TAG" dist/*.dmg dist/*.pkg dist/*.zip dist/*.exe -R "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" --title "$NOME $VERSAO" \
             --notes "Versao 1.0.1: login obrigatorio desde ja (senha master, senha beta valida ate 31/12/2026 ou chave de licenca validada online pelo PCC). Limiter + Clipper + Hybrid. Novo na $VERSAO: chaves de licença validadas online (PCC); a master e as senhas beta continuam a funcionar como antes. macOS 10.13+ (um só instalador para Macs Intel antigos e Apple Silicon, VST3 + AU): LABLOUD-by-Piradex-$VERSAO-macOS.dmg · Windows 10/11 64 bits (VST3): LABLOUD-by-Piradex-$VERSAO-Windows-Setup.exe (ou o .zip para instalação manual)."
