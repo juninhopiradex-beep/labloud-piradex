@@ -209,8 +209,10 @@ jobs:
         run: |
           cmake --build build --config Release --target Loudnex_AAX
           if ($LASTEXITCODE -ne 0) { throw "AAX falhou a compilar" }
-          $a = Get-ChildItem -Path build -Recurse -Directory -Filter "*.aaxplugin" | Where-Object { $_.FullName -notmatch '\\Contents\\' } | Select-Object -First 1
-          if (-not $a) { throw "AAX nao encontrado" }
+          $bin = Get-ChildItem -Path build -Recurse -File -Filter "*.aaxplugin" | Where-Object { $_.FullName -match '\\Contents\\x64\\' -and $_.Length -gt 100000 } | Select-Object -First 1
+          if (-not $bin) { throw "AAX nao encontrado" }
+          $a = $bin.Directory.Parent.Parent          # pasta .aaxplugin (Contents\x64\<binario>)
+          Write-Host "AAX: $($a.FullName) ($([int]($bin.Length/1KB)) KB)"
           $suf = "nao-assinado"
           if ($env:PACE_ACCOUNT -and $env:PACE_EDEN_WIN_URL) {
             Invoke-WebRequest -Uri $env:PACE_EDEN_WIN_URL -OutFile eden.exe
@@ -224,7 +226,10 @@ jobs:
             $suf = "assinado"
           }
           $v = (Select-String -Path CMakeLists.txt -Pattern 'project\([^)]*VERSION ([0-9]+\.[0-9]+\.[0-9]+)' | Select-Object -First 1).Matches[0].Groups[1].Value
-          Compress-Archive -Path $a.FullName, LEIA-ME-AAX.txt -DestinationPath "LABLOUD-by-Piradex-$v-Windows-AAX-$suf.zip" -Force
+          Remove-Item -Recurse -Force aax-zip -ErrorAction SilentlyContinue; New-Item -ItemType Directory aax-zip | Out-Null
+          Copy-Item -Recurse -Force $a.FullName aax-zip\ ; Copy-Item LEIA-ME-AAX.txt aax-zip\
+          Push-Location aax-zip; 7z a -tzip "..\LABLOUD-by-Piradex-$v-Windows-AAX-$suf.zip" * | Out-Null; Pop-Location
+          if ((Get-Item "LABLOUD-by-Piradex-$v-Windows-AAX-$suf.zip").Length -lt 200000) { throw "zip do AAX vazio" }
           Get-ChildItem *-AAX-*.zip
 
       - uses: actions/upload-artifact@v4
