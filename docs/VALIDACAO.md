@@ -65,7 +65,31 @@ Há variação de ±15 % entre corridas neste servidor. As otimizações feitas 
 * **Audição / ABX**: não foi possível ouvir nada. Nenhum dos perfis (Warm, Punch, Aggressive), das curvas, nem o comportamento musical do release adaptativo foi avaliado de ouvido. Os assistentes são heurísticas e a pontuação do Quality Optimizer é uma fórmula explícita, não uma medida de qualidade percebida.
 * **Valores de demonstração**: os medidores da especificação de interface (`docs/gui/loudnex_gui_v7.html`) são simulados, exceto o painel de análise, que calcula de verdade a curva.
 * **Formatos e plataformas**: apenas Linux/Release com o alvo de teste. VST3/AU/AAX reais, macOS, Windows, Pro Tools (AAX/PACE) e o CI não foram compilados nem testados.
-* **Editor JUCE**: não expõe os controlos novos (só Modo/Forma/Oversampling foram estendidos); os restantes são parâmetros do anfitrião. Falta portar a interface da especificação v7.
-* **Verificadores independentes**: o pico verdadeiro foi comparado com um medidor próprio de 64 taps, não com um medidor certificado BS.1770/EBU; os LUFS foram verificados contra sinais de referência simples (tom a −20 dBFS → −20,01 LUFS), não contra os ficheiros de teste oficiais EBU.
+* **Editor JUCE** (resolvido na 0.4.0): todos os parâmetros têm controlo na interface; os últimos que faltavam eram o Alvo LUFS e o Clip Assist (página Assistentes · Delta → Sistema).
+* **Verificadores independentes** (feito na 0.4.0, ver secção 7): LUFS e LRA comparados com a libebur128; pico verdadeiro comparado com um interpolador ideal independente. Os ficheiros de teste oficiais EBU (Tech 3341/3342) ainda não foram corridos.
 * **Concorrentes**: as afirmações do relatório CLIPLIM sobre outros produtos não foram verificadas.
 * **Estabilidade a longo prazo**: não foram feitas corridas de horas; o fuzz foi de segundos de áudio por combinação.
+
+## 7. Validação independente (0.4.0, `tests/test_ebur128.cpp`, corre no GitHub Actions)
+
+Referências: **libebur128** (implementação de referência ITU-R BS.1770 / EBU R128 usada por ffmpeg e Audacity) para LUFS e LRA;
+para o pico verdadeiro, um **interpolador ideal** independente (32×, sinc de 8193 taps com janela de Kaiser β = 14, verificado:
+seno fs/4 de amplitude 0,5 = −6,021 dBTP exatos). A libebur128 também mede pico verdadeiro, mas o seu interpolador de 4×
+lê até **+0,6 dB a mais** em tons perto de fs/4 (o próprio teste mostra-o), por isso não serve de critério para o teto.
+
+| Medidor do LABLOUD vs libebur128 (ruído com 3 níveis, 20 s) | 44,1 kHz | 48 kHz | 96 kHz |
+|---|---|---|---|
+| LUFS integrado (diferença) | 0,01 LU | 0,00 LU | 0,00 LU |
+| LRA (LABLOUD / libebur128) | 12,00 / 12,02 LU | 12,00 / 12,01 LU | 12,10 / 12,04 LU |
+
+| Teto de pico verdadeiro (TP ligado, teto −1,0 dBTP, +6 dB) — interpolador ideal | 44,1 kHz | 48 kHz | 96 kHz |
+|---|---|---|---|
+| Seno fs/4 a 45° (pior caso clássico) | −1,00 | −1,00 | −1,00 |
+| Varrimento 20 Hz–20 kHz | −0,99 | −0,99 | −1,00 |
+| Programa estéreo com hats **sem filtro** (muito ruído perto de Nyquist) | **−0,70** | **−0,69** | **−0,71** |
+
+**Conclusão:** o medidor de loudness do LABLOUD é equivalente à referência (≤ 0,01 LU). O teto de pico verdadeiro é exato
+em tons e varrimentos, mas em material com muita energia perto de Nyquist a própria modulação de ganho do limiter cria
+até ~0,3 dB de pico entre amostras que o detetor (que olha para a entrada) não vê. Na prática: para entregar com margem
+garantida a −1,0 dBTP em material muito brilhante, usar teto −1,3 dB ou ligar o Clipper/Hybrid antes do limiter.
+Correção prevista: segunda deteção de pico verdadeiro na saída (custa ~24 amostras de latência).

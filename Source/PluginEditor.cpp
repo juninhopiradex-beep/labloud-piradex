@@ -512,9 +512,9 @@ void EffView::paint (juce::Graphics& g)
     };
     const float dl = m.effDeltaLufs.load();
     item (44, (dl >= 0 ? "+" : "") + juce::String (dl, 1) + " LU", "Ganho de loudness", T8 ("saída contra entrada, curto prazo"), cTx());
-    item (160, juce::String (m.grAvgDb.load(), 1) + " dB", "GR médio", "quanto o plugin trabalhou em média", cAm());
+    item (160, juce::String (m.grAvgDb.load(), 1) + " dB", T8 ("GR médio"), T8 ("quanto o plugin trabalhou em média"), cAm());
     item (276, dbText (m.distIdxDb.load()) + " dB", T8 ("Índice de distorção"), T8 ("modulação de ganho: quanto mais baixo, melhor"), cCy());
-    g.setColour (cMu()); g.setFont (fontOf (11.f)); g.drawText ("Sem nota unica: cada numero conta a sua parte.", 16, 392, getWidth() - 32, 30, juce::Justification::topLeft);
+    g.setColour (cMu()); g.setFont (fontOf (11.f)); g.drawText (T8 ("Sem nota única: cada número conta a sua parte."), 16, 392, getWidth() - 32, 30, juce::Justification::topLeft);
 }
 
 // ------------------------------------------------------------------------------------------ Login
@@ -605,7 +605,9 @@ LoudnexEditor::LoudnexEditor (LoudnexProcessor& p)
       hchar (p.apvts, ids::hchar, { "Manual", "Clean", "Warm", "Punch", "Aggressive" }, 1),
       route (p.apvts, ids::route, { "Clip>Limit", "Limit>Clip" }, 2),
       deltasel (p.apvts, ids::deltasel, { "Total", "Clipper", "Limiter" }, 0),
+      target (p.apvts, ids::target, { "Off", "-23", "-16", "-14", "-9", "-7" }, 0),
       ratio (p.apvts, ids::ratio, "Clip / Limit", " %", 0, 1), balance (p.apvts, ids::balance, T8 ("Balance · Punch ... Loud"), " %", 0, 0),
+      assist (p.apvts, ids::assist, "Clip Assist", " %", 0, 1),
       grView (p, 0), curve (p), harm (p), spectrum (p), meterView (p), doseBar (p), assistView (p), effView (p),
       login ([this] { timerCallback(); })
 {
@@ -623,7 +625,7 @@ LoudnexEditor::LoudnexEditor (LoudnexProcessor& p)
              &modeSeg, &pageSeg, &advSeg, &slotBtn[0], &slotBtn[1], &slotBtn[2], &slotBtn[3], &saveBtn, &undoBtn, &redoBtn, &skinBtn, &logoutBtn,
              &gain, &ceiling, &release, &lookahead, &punch, &mix, &knee, &cexp, &bias, &postgain, &bassamt, &rlink, &link, &bassfreq, &clippos, &clipneg,
              &transel, &dualoff, &xo1, &xo2, &mbg1, &mbg2, &mbg3, &tp, &bass, &gainmatch, &ceilock, &dual, &dcblock, &mb, &delta, &ms, &hq,
-             &character, &relmode, &spectral, &distguard, &shape, &os, &alias, &hchar, &route, &deltasel, &ratio, &balance,
+             &character, &relmode, &spectral, &distguard, &shape, &os, &alias, &hchar, &route, &deltasel, &target, &ratio, &balance, &assist,
              &grView, &curve, &harm, &spectrum, &meterView, &doseBar, &assistView, &effView })
     {
         content.addChildComponent (c); everything.push_back (c);
@@ -762,9 +764,12 @@ void LoudnexEditor::layoutAll()
         card (X0, Y0 + 346, CW, 130, "Balance e Delta");
         put (balance, X0 + 16, Y0 + 346 + 32, 400, 52); put (delta, X0 + 450, Y0 + 346 + 40, 160, 36); put (deltasel, X0 + 626, Y0 + 346 + 40, 262, 36);
         labels.push_back ({ { X0 + 16, Y0 + 346 + 96, CW - 32, 28 }, "@delta" });
-        card (X0, Y0 + 492, CW, 130, "Sistema");
+        card (X0, Y0 + 492, CW, 186, "Sistema");
         put (ceilock, X0 + 16, Y0 + 492 + 36, 200, 36); put (gainmatch, X0 + 226, Y0 + 492 + 36, 200, 36); put (ms, X0 + 436, Y0 + 492 + 36, 200, 36); put (hq, X0 + 646, Y0 + 492 + 36, 200, 36);
-        labels.push_back ({ { X0 + 16, Y0 + 492 + 84, CW - 32, 36 }, "@system" });
+        labels.push_back ({ { X0 + 16, Y0 + 492 + 80, CW - 32, 34 }, "@system" });
+        // alvo de loudness (Auto-Dose e laudo) e Clip Assist, que antes so se mexiam pelo DAW
+        labels.push_back ({ { X0 + 16, Y0 + 492 + 142, 110, 20 }, "@target" });
+        put (target, X0 + 126, Y0 + 492 + 132, 380, 36); put (assist, X0 + 526, Y0 + 492 + 122, CW - 542, 52);
         card (RX, Y0 + 448, RW, H - 448, "Slots A / B / C / D");
         labels.push_back ({ { RX + 16, Y0 + 448 + 34, RW - 32, H - 448 - 44 }, "@slots" });
     }
@@ -835,6 +840,8 @@ void LoudnexEditor::paint (juce::Graphics& g)
             t = T8 ("Delta ouve só o que o plugin removeu (saída − entrada alinhada). Balance mexe em Punch, release, ratio e clip assist ao largar o botão.");
         else if (t == "@system")
             t = T8 ("Ceiling Lock: assistentes, slots e anular não mexem no teto. Gain Match: iguala a loudness da saída à da entrada. Mid/Side: barreira final de pico em L/R. HQ offline: 32× na exportação.");
+        else if (t == "@target")
+            t = T8 ("ALVO LUFS");
         else if (t == "@slots")
         {
             t = T8 ("Use os botões A B C D no cabeçalho: clique guarda num slot vazio e chama um slot guardado. Ative \"Guardar\" para sobrescrever. Um ponto no botão marca os slots em uso. Anular e Refazer percorrem as últimas alterações.");

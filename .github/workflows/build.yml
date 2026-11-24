@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  VERSAO: "0.3.0"
+  VERSAO: "0.4.0"
   NOME: "LABLOUD by Piradex"
 
 jobs:
@@ -16,12 +16,18 @@ jobs:
       - uses: actions/checkout@v4
       - name: Testes do núcleo (DSP, laudo PDF, motor, assistentes, senhas)
         run: |
+          set -o pipefail   # um teste que falha faz falhar o build (antes o "| tail" escondia a falha)
           # o test_licensing usa senhas de teste: gera um Secrets.h só para o teste (o do plugin não muda)
           mkdir -p /tmp/sec && python3 tools/gen_secrets.py --out /tmp/sec --master TestMaster-123 --beta TestBeta-456
           for t in test_dsp test_pdf test_engine test_assist test_licensing; do
             g++ -O2 -std=c++20 -I/tmp/sec/Source -ISource -Itests "tests/$t.cpp" -o "$t"
             echo "== $t"; ./"$t" | tail -n 3
           done
+      - name: Validação independente (libebur128 + interpolador ideal de pico verdadeiro)
+        run: |
+          sudo apt-get update && sudo apt-get install -y libebur128-dev
+          g++ -O3 -std=c++20 -ISource -Itests tests/test_ebur128.cpp -lebur128 -o test_ebur128
+          ./test_ebur128
 
   macos:
     needs: testes

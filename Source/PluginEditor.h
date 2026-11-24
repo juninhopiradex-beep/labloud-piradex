@@ -228,8 +228,8 @@ private:
     // botões rotativos (um por parâmetro)
     K gain, ceiling, release, lookahead, punch, mix, knee, cexp, bias, postgain, bassamt, rlink, link, bassfreq, clippos, clipneg, transel, dualoff, xo1, xo2, mbg1, mbg2, mbg3;
     lxui::Pill tp, bass, gainmatch, ceilock, dual, dcblock, mb, delta, ms, hq;
-    lxui::Seg character, relmode, spectral, distguard, shape, os, alias, hchar, route, deltasel;
-    lxui::HSlider ratio, balance;
+    lxui::Seg character, relmode, spectral, distguard, shape, os, alias, hchar, route, deltasel, target;
+    lxui::HSlider ratio, balance, assist;
     lxui::GrView grView;
     lxui::CurveView curve; lxui::HarmView harm; lxui::SpectrumView spectrum;
     lxui::MeterView meterView; lxui::DoseBar doseBar; lxui::AssistView assistView; lxui::EffView effView;

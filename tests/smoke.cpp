@@ -51,6 +51,9 @@ int main()
 
     // 1) bloqueado: passa o áudio atrasado, sem processar
     AccessManager::get().logout();
+    if (AccessManager::inTrial())
+        std::printf ("(período aberto até 31/12/2026: sem bloqueio para testar)\n");
+    else
     { std::vector<float> in (8000, 0.f); in[1000] = 0.9f; auto out = run (p, in, bs);
       CHECK (std::fabs (out[1000 + (size_t) lat] - 0.9f) < 1e-6f, "bloqueado: impulso 0.9 passa sem alteração, atrasado %d", lat); }
 

@@ -1,5 +1,13 @@
 # Changelog — LABLOUD by Piradex
 
+## 0.4.0 (auditoria 24/11/2026)
+
+* **Interface completa:** Alvo LUFS (Off / −23 / −16 / −14 / −9 / −7) e Clip Assist passam a ter controlo na página Assistentes · Delta → Sistema (antes só se mexiam pelo DAW).
+* **Validação independente** (`tests/test_ebur128.cpp`, no GitHub Actions): LUFS e LRA contra a libebur128 (diferença ≤ 0,01 LU) e teto de pico verdadeiro contra um interpolador ideal. Resultados e um limite conhecido em material muito brilhante em `docs/VALIDACAO.md` (secção 7).
+* Corrigidos acentos mal mostrados no painel Loudness Efficiency ("GR médio").
+* Teste de fumo: o teste "bloqueado" é saltado durante o período aberto (até 31/12/2026).
+* Nova senha master (a anterior estava escrita no repositório).
+
 ## Beta 2 (implementação do relatório CLIPLIM)
 
 ### Limiter
@@ -36,5 +44,4 @@
 * A decimação do oversampler tinha 0,5 amostra de desalinhamento por estágio; corrigido (reconstrução exata).
 
 ### Ainda por fazer
-* Editor JUCE com os controlos novos (hoje só Modo/Forma/Oversampling foram estendidos; os restantes são parâmetros acessíveis pelo anfitrião). A especificação de interface está em `docs/gui/loudnex_gui_v7.html`.
 * Verificação auditiva (ABX), AAX, macOS e Windows, CI, instaladores.
