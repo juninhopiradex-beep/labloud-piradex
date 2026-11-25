@@ -63,6 +63,25 @@ public:
 };
 
 // ---------------------------------------------------------------------------------------------
+// Aparencia propria dos componentes do kit: o LookAndFeel de cada plugin nao muda os botoes do login nem do pop-up
+class KitLookAndFeel : public juce::LookAndFeel_V4
+{
+public:
+    void drawButtonBackground (juce::Graphics& g, juce::Button& b, const juce::Colour& bg, bool over, bool down) override
+    {
+        auto r = b.getLocalBounds().toFloat().reduced (0.5f);
+        auto c = bg; if (! b.isEnabled()) c = c.withMultipliedAlpha (0.5f); else if (down) c = c.darker (0.15f); else if (over) c = c.brighter (0.08f);
+        g.setColour (c); g.fillRoundedRectangle (r, 8.0f);
+    }
+    void drawButtonText (juce::Graphics& g, juce::TextButton& b, bool, bool) override
+    {
+        g.setColour (b.findColour (juce::TextButton::textColourOffId).withMultipliedAlpha (b.isEnabled() ? 1.0f : 0.6f));
+        g.setFont (juce::Font (juce::FontOptions (13.0f, juce::Font::bold)));
+        g.drawFittedText (b.getButtonText(), b.getLocalBounds().reduced (6, 2), juce::Justification::centred, 1);
+    }
+    static KitLookAndFeel& get() { static KitLookAndFeel l; return l; }
+};
+
 class LoginScreen : public juce::Component, private piradex::i18n::Listener
 {
 public:
@@ -72,6 +91,7 @@ public:
         : pluginName (std::move (pluginName_)), accent (accent_), version (std::move (version_))
     {
         piradex::i18n::addListener (this);
+        setLookAndFeel (&KitLookAndFeel::get());
         addAndMakeVisible (pw);
         pw.setPasswordCharacter ((juce::juce_wchar) 0x2022);
         pw.setFont (font (15.f));
@@ -99,7 +119,7 @@ public:
         refreshTexts();
         setWantsKeyboardFocus (false);
     }
-    ~LoginScreen() override { piradex::i18n::removeListener (this); }
+    ~LoginScreen() override { setLookAndFeel (nullptr); piradex::i18n::removeListener (this); }
 
     void setStatus (const juce::String& message, bool isError) { status = message; statusError = isError; repaint(); }
     void setBusy (bool b) { busy = b; enter.setEnabled (! b); pw.setEnabled (! b); repaint(); }
@@ -266,6 +286,7 @@ public:
         : pluginName (std::move (pluginName_)), accent (accent_), version (std::move (version_)), items (std::move (items_))
     {
         piradex::i18n::addListener (this);
+        setLookAndFeel (&KitLookAndFeel::get());
         addAndMakeVisible (close);
         close.setColour (juce::TextButton::buttonColourId, accent);
         close.setColour (juce::TextButton::textColourOffId, juce::Colour (0xff0b0d11));
@@ -274,7 +295,7 @@ public:
         refreshTexts();
         setWantsKeyboardFocus (true);
     }
-    ~Welcome() override { piradex::i18n::removeListener (this); }
+    ~Welcome() override { setLookAndFeel (nullptr); piradex::i18n::removeListener (this); }
 
     void paint (juce::Graphics& g) override
     {
