@@ -64,7 +64,9 @@ juce_add_plugin(Loudnex
 target_sources(Loudnex PRIVATE
     Source/PluginProcessor.cpp
     Source/PluginEditor.cpp
-    Source/Access.cpp)
+    Source/Access.cpp
+    Source/i18n/PiradexLanguage.cpp
+    Source/i18n/ZhTable.cpp)
 target_include_directories(Loudnex PRIVATE Source)
 
 # PCC (Plugin Control Central): chaves de licença validadas online, mesma infraestrutura de todos os plugins Piradex
@@ -109,7 +111,7 @@ endif()
 option(LX_BUILD_SMOKE "Compilar o teste de fumo do processador" OFF)
 if(LX_BUILD_SMOKE)
     juce_add_console_app(LoudnexSmoke PRODUCT_NAME "loudnex_smoke")
-    target_sources(LoudnexSmoke PRIVATE tests/smoke.cpp Source/PluginProcessor.cpp Source/PluginEditor.cpp Source/Access.cpp)
+    target_sources(LoudnexSmoke PRIVATE tests/smoke.cpp Source/PluginProcessor.cpp Source/PluginEditor.cpp Source/Access.cpp Source/i18n/PiradexLanguage.cpp Source/i18n/ZhTable.cpp)
     target_include_directories(LoudnexSmoke PRIVATE Source)
     target_compile_definitions(LoudnexSmoke PRIVATE PIRADEX_PCC_URL="${PIRADEX_PCC_URL}" PIRADEX_PCC_PUBKEY="${PIRADEX_PCC_PUBKEY}" PIRADEX_PCC_VERSION="${PROJECT_VERSION}" JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_MODAL_LOOPS_PERMITTED=1
         JUCE_STANDALONE_APPLICATION=1 JUCE_PLUGINHOST_AU=0 LX_VERSION_STRING="${PROJECT_VERSION}")

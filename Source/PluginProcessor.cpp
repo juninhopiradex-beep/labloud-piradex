@@ -1,3 +1,4 @@
+#include "i18n/PiradexLanguage.h"
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include <cstring>
@@ -83,6 +84,7 @@ LoudnexProcessor::LoudnexProcessor()
       undoManager (30000, 30),
       apvts (*this, &undoManager, "LABLOUD", createLayout())
 {
+    piradex::i18n::registerPluginTable();
     expiryTimer.startTimer (30 * 1000);
 }
 

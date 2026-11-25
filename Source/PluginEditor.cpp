@@ -16,7 +16,7 @@ namespace
     }
     void caption (juce::Graphics& g, const juce::String& t, juce::Rectangle<int> r, juce::Justification j = juce::Justification::centredLeft)
     {
-        juce::String u = t.toUpperCase();
+        juce::String u = TRs (t).toUpperCase();
         static const char* lo[] = { "\xC3\xA1","\xC3\xA0","\xC3\xA2","\xC3\xA3","\xC3\xA9","\xC3\xAA","\xC3\xAD","\xC3\xB3","\xC3\xB4","\xC3\xB5","\xC3\xBA","\xC3\xA7" };
         static const char* up[] = { "\xC3\x81","\xC3\x80","\xC3\x82","\xC3\x83","\xC3\x89","\xC3\x8A","\xC3\x8D","\xC3\x93","\xC3\x94","\xC3\x95","\xC3\x9A","\xC3\x87" };
         for (int k = 0; k < 12; ++k) u = u.replace (juce::String::fromUTF8 (lo[k]), juce::String::fromUTF8 (up[k]));
@@ -77,7 +77,7 @@ void Look::drawToggleButton (juce::Graphics& g, juce::ToggleButton& b, bool hl, 
     const float dot = 8.f;
     g.setColour (on ? col : cGray()); g.fillEllipse (r.getX() + 14.f, r.getCentreY() - dot * 0.5f, dot, dot);
     g.setFont (fontOf (12.f, true)); g.setColour (on ? cTx() : cMu());
-    g.drawText (b.getButtonText(), r.withTrimmedLeft (30.f).toNearestInt(), juce::Justification::centredLeft);
+    g.drawText (TRs (b.getButtonText()), r.withTrimmedLeft (30.f).toNearestInt(), juce::Justification::centredLeft);
 }
 
 void Look::drawButtonBackground (juce::Graphics& g, juce::Button& b, const juce::Colour&, bool hl, bool down)
@@ -96,7 +96,7 @@ void Look::drawButtonText (juce::Graphics& g, juce::TextButton& b, bool, bool)
     const bool primary = (bool) b.getProperties().getWithDefault ("primary", false), on = b.getToggleState();
     g.setFont (fontOf (12.f, true));
     g.setColour (! b.isEnabled() ? cGray() : (primary ? cOnAcc() : (on ? col : cTx())));
-    g.drawText (b.getButtonText(), b.getLocalBounds(), juce::Justification::centred);
+    g.drawText (TRs (b.getButtonText()), b.getLocalBounds(), juce::Justification::centred);
     if ((bool) b.getProperties().getWithDefault ("used", false))
     {
         g.setColour (primary ? cOnAcc() : col); g.fillEllipse ((float) b.getWidth() - 11.f, 5.f, 5.f, 5.f);
@@ -146,7 +146,7 @@ void Seg::paint (juce::Graphics& g)
             g.fillRoundedRectangle (cell, 8.f);
         }
         g.setColour (on ? cOnAcc() : cMu()); g.setFont (fontOf (12.f, true));
-        g.drawText (labels[i], cell.toNearestInt(), juce::Justification::centred);
+        g.drawText (TRs (labels[i]), cell.toNearestInt(), juce::Justification::centred);
     }
 }
 void Seg::mouseDown (const juce::MouseEvent& e)
@@ -222,7 +222,7 @@ void GrView::paint (juce::Graphics& g)
     for (int s = -1; s <= 1; s += 2)
         g.drawDashedLine (juce::Line<float> (area.getX(), mid + (float) s * yOf (ceilDb), area.getRight(), mid + (float) s * yOf (ceilDb)), dash, 2, 1.2f);
     g.setColour (cTx()); g.setFont (fontOf (11.f, true));
-    g.drawText ("TETO " + juce::String (ceilDb, 1) + " dB", (int) area.getRight() - 130, (int) area.getY() + 2, 126, 14, juce::Justification::right);
+    g.drawText (TR ("TETO ") + juce::String (ceilDb, 1) + " dB", (int) area.getRight() - 130, (int) area.getY() + 2, 126, 14, juce::Justification::right);
 }
 
 // ------------------------------------------------------------------------------------------ Curva e harmónicos reais do Clipper
@@ -276,9 +276,9 @@ void CurveView::paint (juce::Graphics& g)
     for (auto& q : pts) { const float yy = juce::jlimit (-1.55f, 1.55f, q.y); if (first) { p.startNewSubPath (X (q.x), Y (yy)); first = false; } else p.lineTo (X (q.x), Y (yy)); }
     g.setColour (cCy()); g.strokePath (p, juce::PathStrokeType (2.6f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
     g.setColour (cMu()); g.setFont (fontOf (10.f, true));
-    g.drawText ("ENTRADA", (int) a.getRight() - 60, (int) c.y + 4, 60, 12, juce::Justification::right);
-    g.drawText ("SAIDA", (int) c.x + 4, (int) a.getY(), 60, 12, juce::Justification::left);
-    g.setColour (cAm()); g.drawText ("teto", (int) a.getX() + 2, (int) Y ((float) ceilLin) - 14, 40, 12, juce::Justification::left);
+    g.drawText (TR ("ENTRADA"), (int) a.getRight() - 60, (int) c.y + 4, 60, 12, juce::Justification::right);
+    g.drawText (TR ("SAIDA"), (int) c.x + 4, (int) a.getY(), 60, 12, juce::Justification::left);
+    g.setColour (cAm()); g.drawText (TR ("teto"), (int) a.getX() + 2, (int) Y ((float) ceilLin) - 14, 40, 12, juce::Justification::left);
 }
 
 void HarmView::refresh()
@@ -306,7 +306,7 @@ void HarmView::refresh()
 void HarmView::paint (juce::Graphics& g)
 {
     auto a = getLocalBounds().toFloat().reduced (6.f, 4.f);
-    caption (g, T8 ("THD ≈ ") + juce::String (thd, 1) + " %", a.removeFromTop (14.f).toNearestInt(), juce::Justification::centredRight);
+    caption (g, TR ("THD ≈ ") + juce::String (thd, 1) + " %", a.removeFromTop (14.f).toNearestInt(), juce::Justification::centredRight);
     const float labH = 16.f; auto bars = a.withTrimmedBottom (labH + 14.f).withTrimmedTop (14.f);
     const float w = a.getWidth() / 8.f;
     for (int i = 0; i < 8; ++i)
@@ -360,7 +360,7 @@ void SpectrumView::paint (juce::Graphics& g)
         g.setColour (cCy().withAlpha (0.14f)); g.fillPath (fill);
         g.setColour (cCy()); g.strokePath (p, juce::PathStrokeType (2.2f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
     }
-    else { g.setColour (cMu()); g.setFont (fontOf (13.f)); g.drawText (T8 ("Toque áudio para ver o espectro da saída"), getLocalBounds().reduced (40), juce::Justification::centred); }
+    else { g.setColour (cMu()); g.setFont (fontOf (13.f)); g.drawText (TR ("Toque áudio para ver o espectro da saída"), getLocalBounds().reduced (40), juce::Justification::centred); }
     for (int i = 1; i <= 2; ++i)
     {
         const float x = ex[i]; const juce::String t = (i == 1 ? x1 : x2) >= 1000.f ? juce::String ((i == 1 ? x1 : x2) / 1000.f, 1) + "k" : juce::String ((int) (i == 1 ? x1 : x2));
@@ -380,7 +380,7 @@ void MeterView::tick()
 void MeterView::paint (juce::Graphics& g)
 {
     const auto& m = proc.meters; const int ac = mode == 0 ? 0 : 1;
-    caption (g, T8 ("Níveis · pico"), { 16, 12, 200, 16 });
+    caption (g, TR ("Níveis · pico"), { 16, 12, 200, 16 });
     auto bar = [&] (float x, float db, const juce::String& name, juce::Colour c)
     {
         const float top = 66.f, hgt = 250.f, v = juce::jlimit (0.f, 1.f, (db + 36.f) / 36.f);
@@ -389,37 +389,37 @@ void MeterView::paint (juce::Graphics& g)
         g.setColour (cMu()); g.setFont (fontOf (10.f, true)); g.drawText (name, (int) x - 12, (int) (top + hgt + 4.f), 54, 12, juce::Justification::centred);
         g.setColour (cTx()); g.drawText (dbText (db), (int) x - 12, (int) (top - 18.f), 54, 14, juce::Justification::centred);
     };
-    bar (30.f, inD, "ENTRADA", cGray()); bar (92.f, outD, T8 ("SAÍDA"), accent (ac));
+    bar (30.f, inD, TR ("ENTRADA"), cGray()); bar (92.f, outD, TR ("SAÍDA"), accent (ac));
     auto big = [&] (const juce::String& label, const juce::String& val, int y, juce::Colour c, float size)
     {
         caption (g, label, { 150, y, 150, 14 }, juce::Justification::centred);
         g.setColour (c); g.setFont (fontOf (size, true)); g.drawText (val, 150, y + 14, 150, (int) (size + 8), juce::Justification::centred);
     };
-    big (T8 ("Redução"), juce::String (m.grDb.load(), 1) + " dB", 50, cBad(), 30.f);
-    big (T8 ("LUFS momentâneo"), dbText (m.momentary.load()), 126, cTx(), 24.f);
+    big (TR ("Redução"), juce::String (m.grDb.load(), 1) + " dB", 50, cBad(), 30.f);
+    big (TR ("LUFS momentâneo"), dbText (m.momentary.load()), 126, cTx(), 24.f);
     big ("LUFS curto prazo", dbText (m.shortTerm.load()), 188, cTx(), 24.f);
     big ("LUFS integrado", dbText (m.integrated.load()), 250, accent (ac), 24.f);
     int y = 350;
     auto row = [&] (const juce::String& l, const juce::String& v, juce::Colour c)
     {
         g.setColour (cLine()); g.drawHorizontalLine (y - 3, 16.f, (float) getWidth() - 16.f);
-        g.setColour (cMu()); g.setFont (fontOf (12.f)); g.drawText (l, 18, y, 170, 22, juce::Justification::centredLeft);
+        g.setColour (cMu()); g.setFont (fontOf (12.f)); g.drawText (TRs (l), 18, y, 170, 22, juce::Justification::centredLeft);
         g.setColour (c); g.setFont (fontOf (13.f, true)); g.drawText (v, 150, y, getWidth() - 168, 22, juce::Justification::centredRight); y += 26;
     };
     const double lat = proc.reportedLatency() * 1000.0 / std::max (1.0, proc.currentSampleRate());
     row ("True Peak max.", juce::String (m.tpMaxDb.load(), 2) + " dBTP", cTx());
     row ("GR max.", juce::String (m.grMaxDb.load(), 1) + " dB", cTx());
     row ("LRA", juce::String (m.lra.load(), 1) + " LU", cTx());
-    row (T8 ("Latência"), juce::String (lat, 2) + " ms", cTx());
+    row (TR ("Latência"), juce::String (lat, 2) + " ms", cTx());
     const int clamps = m.clamps.load();
-    row ("Barreira de pico", clamps == 0 ? juce::String::fromUTF8 ("sem interven\xc3\xa7\xc3\xb5es") : juce::String (clamps) + juce::String::fromUTF8 (" interven\xc3\xa7\xc3\xb5es"), clamps == 0 ? cOk() : cBad());
+    row ("Barreira de pico", clamps == 0 ? TR ("sem interven\xc3\xa7\xc3\xb5" "es") : juce::String (clamps) + TR (" interven\xc3\xa7\xc3\xb5" "es"), clamps == 0 ? cOk() : cBad());
     if (mode != 0)
     {
         y += 8; caption (g, "Clipper", { 16, y, 200, 16 }); y += 22;
         row ("Densidade de picos", juce::String (m.clipDensityPct.load(), 1) + " %", cTx());
-        row (T8 ("Corte máximo"), juce::String (m.clipMaxDb.load(), 1) + " dB", cTx());
+        row (TR ("Corte máximo"), juce::String (m.clipMaxDb.load(), 1) + " dB", cTx());
         row ("Eventos", juce::String (m.clipEvents.load()), cTx());
-        row (T8 ("Duração média"), juce::String (m.clipAvgSamples.load(), 1) + " amostras", cTx());
+        row (TR ("Duração média"), juce::String (m.clipAvgSamples.load(), 1) + TR (" amostras"), cTx());
         row ("Oversampling ativo", kOsNames[juce::jlimit (0, 3, m.osStage.load())], cCy());
     }
 }
@@ -430,7 +430,7 @@ DoseBar::DoseBar (LoudnexProcessor& p) : proc (p)
     start.onClick = [this] { proc.startAutoDose(); };
     apply.onClick = [this] { proc.applyAutoDose(); };
     apply.getProperties().set ("primary", true);
-    start.setButtonText (T8 ("Auto-Dose · ouvir 8 s"));
+    start.setButtonText (TR ("Auto-Dose · ouvir 8 s"));
     addAndMakeVisible (start); addAndMakeVisible (apply);
 }
 void DoseBar::resized() { start.setBounds (14, 12, 190, 40); apply.setBounds (212, 12, 90, 40); }
@@ -439,13 +439,13 @@ void DoseBar::paint (juce::Graphics& g)
 {
     const int st = proc.dose.state.load(); auto& d = proc.dose;
     juce::String msg;
-    if (st == 0) msg = T8 ("Toque o áudio e carregue em Auto-Dose: ouve 8 s e sugere ganho, release e lookahead.");
-    else if (st == 1) msg = T8 ("A ouvir... ") + juce::String ((int) (d.progress.load() * 100.f)) + " %";
+    if (st == 0) msg = TR ("Toque o áudio e carregue em Auto-Dose: ouve 8 s e sugere ganho, release e lookahead.");
+    else if (st == 1) msg = TR ("A ouvir... ") + juce::String ((int) (d.progress.load() * 100.f)) + " %";
     else
     {
-        msg = T8 ("Sugestão: ganho +") + juce::String (d.gainDb.load(), 1) + T8 (" dB  ·  release ") + juce::String (juce::roundToInt (d.releaseMs.load())) + T8 (" ms  ·  lookahead ") + juce::String (d.lookaheadMs.load(), 1)
-              + T8 (" ms  ·  GR esperado ") + juce::String (d.expectedGrDb.load(), 1) + " dB";
-        if (! d.reachable.load()) msg += T8 ("  ·  alvo inalcançável com este teto");
+        msg = TR ("Sugestão: ganho +") + juce::String (d.gainDb.load(), 1) + TR (" dB  ·  release ") + juce::String (juce::roundToInt (d.releaseMs.load())) + TR (" ms  ·  lookahead ") + juce::String (d.lookaheadMs.load(), 1)
+              + TR (" ms  ·  GR esperado ") + juce::String (d.expectedGrDb.load(), 1) + " dB";
+        if (! d.reachable.load()) msg += TR ("  ·  alvo inalcançável com este teto");
     }
     g.setColour (cMu()); g.setFont (fontOf (12.f)); g.drawText (msg, 316, 10, getWidth() - 330, 18, juce::Justification::centredLeft);
     auto bar = juce::Rectangle<float> (316.f, 38.f, (float) getWidth() - 332.f, 7.f);
@@ -456,9 +456,9 @@ void DoseBar::paint (juce::Graphics& g)
 // ------------------------------------------------------------------------------------------ Assistentes
 AssistView::AssistView (LoudnexProcessor& p) : proc (p)
 {
-    listen.setButtonText (T8 ("Auto-Dose · ouvir 8 s")); listen.onClick = [this] { proc.startAutoDose(); note = {}; };
+    listen.setButtonText (TR ("Auto-Dose · ouvir 8 s")); listen.onClick = [this] { proc.startAutoDose(); note = {}; };
     analyse.setButtonText ("Analisar material");
-    analyse.onClick = [this] { note = proc.runAssistants() ? juce::String() : T8 ("Faça primeiro o Auto-Dose com áudio a tocar (8 s)."); repaint(); };
+    analyse.onClick = [this] { note = proc.runAssistants() ? juce::String() : TR ("Faça primeiro o Auto-Dose com áudio a tocar (8 s)."); repaint(); };
     applyAll.setButtonText ("Aplicar tudo"); applyAll.getProperties().set ("primary", true);
     applyAll.onClick = [this] { proc.applyAssistants(); };
     addAndMakeVisible (listen); addAndMakeVisible (analyse); addAndMakeVisible (applyAll);
@@ -468,22 +468,22 @@ void AssistView::tick() { applyAll.setEnabled (proc.assistInfo().valid); repaint
 void AssistView::paint (juce::Graphics& g)
 {
     caption (g, "Assistentes", { 16, 14, 300, 16 });
-    g.setColour (cMu()); g.setFont (fontOf (11.f)); g.drawText (T8 ("regras determinísticas, não é IA"), getWidth() - 316, 14, 300, 16, juce::Justification::centredRight);
+    g.setColour (cMu()); g.setFont (fontOf (11.f)); g.drawText (TR ("regras determinísticas, não é IA"), getWidth() - 316, 14, 300, 16, juce::Justification::centredRight);
     const auto& a = proc.assistInfo();
     const int st = proc.dose.state.load();
     g.setColour (cMu()); g.setFont (fontOf (12.f));
-    g.drawText (st == 1 ? T8 ("A ouvir... ") + juce::String ((int) (proc.dose.progress.load() * 100.f)) + " %" : (note.isNotEmpty() ? note : (a.valid ? T8 ("Análise pronta (8 s capturados)") : T8 ("Sem análise: ouça 8 s de áudio e carregue em Analisar."))),
+    g.drawText (st == 1 ? TR ("A ouvir... ") + juce::String ((int) (proc.dose.progress.load() * 100.f)) + " %" : (note.isNotEmpty() ? note : (a.valid ? TR ("Análise pronta (8 s capturados)") : TR ("Sem análise: ouça 8 s de áudio e carregue em Analisar."))),
                 560, 44, getWidth() - 576, 40, juce::Justification::centredLeft);
     auto item = [&] (int x, int y, const juce::String& label, const juce::String& val, juce::Colour c = cTx())
     {
         caption (g, label, { x, y, 400, 14 }); g.setColour (a.valid ? c : cGray()); g.setFont (fontOf (16.f, true));
-        g.drawText (a.valid ? val : "-", x, y + 16, 410, 22, juce::Justification::centredLeft);
+        g.drawText (a.valid ? val : juce::String ("-"), x, y + 16, 410, 22, juce::Justification::centredLeft);
     };
-    item (16, 112, "Material", "crest " + juce::String (a.profile.crestDb, 1) + T8 (" dB  ·  transiência ") + juce::String (a.profile.transientness, 2));
-    item (16, 168, "Smart Clip Amount", "+" + juce::String (a.clipGainDb, 1) + " dB no clipper", cCy());
+    item (16, 112, TR ("Material"), "crest " + juce::String (a.profile.crestDb, 1) + TR (" dB  ·  transiência ") + juce::String (a.profile.transientness, 2));
+    item (16, 168, "Smart Clip Amount", "+" + juce::String (a.clipGainDb, 1) + TR (" dB no clipper"), cCy());
     item (16, 224, "Auto Routing", a.order == lx::dsp::HybridOrder::ClipThenLimit ? "Clip>Limit" : "Limit>Clip");
-    item (16, 280, "Smart Distribution", "clipper " + juce::String (a.clipShareDb, 1) + T8 (" dB  ·  limiter ") + juce::String (a.limitShareDb, 1) + T8 (" dB  ·  ratio ") + juce::String (juce::roundToInt (a.ratio * 100.0)) + " %", cAm());
-    caption (g, T8 ("Quality Optimizer (carácter harmónico)"), { 470, 112, 420, 14 });
+    item (16, 280, "Smart Distribution", "clipper " + juce::String (a.clipShareDb, 1) + TR (" dB  ·  limiter ") + juce::String (a.limitShareDb, 1) + TR (" dB  ·  ratio ") + juce::String (juce::roundToInt (a.ratio * 100.0)) + " %", cAm());
+    caption (g, TR ("Quality Optimizer (carácter harmónico)"), { 470, 112, 420, 14 });
     for (int i = 0; i < 4; ++i)
     {
         const int y = 138 + i * 40; const bool best = a.valid && a.qo.best == i;
@@ -492,17 +492,17 @@ void AssistView::paint (juce::Graphics& g)
         g.setColour (cTx()); g.setFont (fontOf (13.f, true)); g.drawText (kCharNames[i], 482, y, 100, 34, juce::Justification::centredLeft);
         g.setColour (a.valid ? cTx() : cGray()); g.setFont (fontOf (12.f));
         if (a.valid)
-            g.drawText (juce::String (a.qo.cand[i].loudGainDb, 1) + T8 (" dB loud  ·  DSR ") + juce::String (a.qo.cand[i].dsrDb, 1) + T8 (" dB  ·  ") + juce::String (a.qo.cand[i].score, 1),
+            g.drawText (juce::String (a.qo.cand[i].loudGainDb, 1) + TR (" dB loud  ·  DSR ") + juce::String (a.qo.cand[i].dsrDb, 1) + TR (" dB  ·  ") + juce::String (a.qo.cand[i].score, 1),
                         570, y, 310, 34, juce::Justification::centredRight);
     }
     g.setColour (cMu()); g.setFont (fontOf (11.f));
-    g.drawText (T8 ("pontuação = ganho de loudness − penalização da distorção relativa; fórmula explícita, não mede qualidade percebida."), 470, 306, 420, 14, juce::Justification::centredLeft);
+    g.drawText (TR ("pontuação = ganho de loudness − penalização da distorção relativa; fórmula explícita, não mede qualidade percebida."), 470, 306, 420, 14, juce::Justification::centredLeft);
 }
 
 void EffView::paint (juce::Graphics& g)
 {
     const auto& m = proc.meters;
-    caption (g, T8 ("Loudness efficiency · três números"), { 16, 12, getWidth() - 32, 16 });
+    caption (g, TR ("Loudness efficiency · três números"), { 16, 12, getWidth() - 32, 16 });
     auto item = [&] (int y, const juce::String& val, const juce::String& name, const juce::String& txt, juce::Colour c)
     {
         g.setColour (cBg()); g.fillRoundedRectangle (14.f, (float) y, (float) getWidth() - 28.f, 104.f, 10.f);
@@ -511,66 +511,38 @@ void EffView::paint (juce::Graphics& g)
         g.setColour (cMu()); g.setFont (fontOf (11.f)); g.drawText (txt, 28, y + 64, getWidth() - 56, 34, juce::Justification::topLeft);
     };
     const float dl = m.effDeltaLufs.load();
-    item (44, (dl >= 0 ? "+" : "") + juce::String (dl, 1) + " LU", "Ganho de loudness", T8 ("saída contra entrada, curto prazo"), cTx());
-    item (160, juce::String (m.grAvgDb.load(), 1) + " dB", T8 ("GR médio"), T8 ("quanto o plugin trabalhou em média"), cAm());
-    item (276, dbText (m.distIdxDb.load()) + " dB", T8 ("Índice de distorção"), T8 ("modulação de ganho: quanto mais baixo, melhor"), cCy());
-    g.setColour (cMu()); g.setFont (fontOf (11.f)); g.drawText (T8 ("Sem nota única: cada número conta a sua parte."), 16, 392, getWidth() - 32, 30, juce::Justification::topLeft);
+    item (44, (dl >= 0 ? "+" : "") + juce::String (dl, 1) + " LU", TR ("Ganho de loudness"), TR ("saída contra entrada, curto prazo"), cTx());
+    item (160, juce::String (m.grAvgDb.load(), 1) + " dB", TR ("GR médio"), TR ("quanto o plugin trabalhou em média"), cAm());
+    item (276, dbText (m.distIdxDb.load()) + " dB", TR ("Índice de distorção"), TR ("modulação de ganho: quanto mais baixo, melhor"), cCy());
+    g.setColour (cMu()); g.setFont (fontOf (11.f)); g.drawText (TR ("Sem nota única: cada número conta a sua parte."), 16, 392, getWidth() - 32, 30, juce::Justification::topLeft);
 }
 
 // ------------------------------------------------------------------------------------------ Login
 Login::Login (std::function<void()> onSuccess) : onOk (std::move (onSuccess))
 {
-    pw.setPasswordCharacter ((juce::juce_wchar) 0x2022); pw.setTextToShowWhenEmpty ("Senha de acesso", juce::Colour (kDim));
-    pw.setJustification (juce::Justification::centred); pw.setFont (fontOf (16.f)); pw.onReturnKey = [this] { submit(); };
-    remember.setToggleState (true, juce::dontSendNotification);
-    enter.onClick = [this] { submit(); };
-    enter.getProperties().set ("primary", true);
-    msg.setJustificationType (juce::Justification::centred); msg.setFont (fontOf (12.f)); msg.setColour (juce::Label::textColourId, juce::Colour (0xffff6b7a));
-    addAndMakeVisible (pw); addAndMakeVisible (remember); addAndMakeVisible (enter); addAndMakeVisible (msg);
+    screen.onSubmit = [this] (const juce::String& p, bool rem) { submit (p, rem); };
+    addAndMakeVisible (screen);
 }
-void Login::resized()
+void Login::submit (const juce::String& pass, bool rem)
 {
-    auto r = getLocalBounds().withSizeKeepingCentre (380, 300).reduced (30, 0);
-    pw.setBounds (r.getX(), r.getY() + 110, r.getWidth(), 40);
-    remember.setBounds (r.getX(), r.getY() + 160, r.getWidth(), 24);
-    enter.setBounds (r.getX(), r.getY() + 194, r.getWidth(), 40);
-    msg.setBounds (r.getX() - 20, r.getY() + 240, r.getWidth() + 40, 20);
-}
-void Login::paint (juce::Graphics& g)
-{
-    g.fillAll (juce::Colour (kBg).withAlpha (0.96f));
-    auto card = getLocalBounds().withSizeKeepingCentre (380, 300).toFloat();
-    g.setColour (juce::Colour (kPanel)); g.fillRoundedRectangle (card, 18.f);
-    g.setColour (juce::Colour (kLine)); g.drawRoundedRectangle (card.reduced (0.5f), 18.f, 1.f);
-    g.setGradientFill (juce::ColourGradient (juce::Colour (0xffffb224), card.getX(), card.getY(), juce::Colour (0xff3fd6c6), card.getRight(), card.getY(), false));
-    g.setFont (fontOf (34.f, true)); g.drawText ("LABLOUD", card.withTrimmedTop (28.f).withHeight (46.f).toNearestInt(), juce::Justification::centred);
-    g.setColour (juce::Colour (kDim)); g.setFont (fontOf (12.f));
-    g.drawText (T8 ("by Piradex  ·  Limiter + Clipper + Hybrid"), card.withTrimmedTop (76.f).withHeight (18.f).toNearestInt(), juce::Justification::centred);
-}
-void Login::submit()
-{
-    if (busy) return;
-    const juce::String pass = pw.getText();
-    if (pass.trim().isEmpty()) { msg.setText ("Escreva a senha.", juce::dontSendNotification); return; }
-    busy = true; enter.setEnabled (false); msg.setColour (juce::Label::textColourId, juce::Colour (kDim)); msg.setText ("A verificar...", juce::dontSendNotification);
-    const bool rem = remember.getToggleState();
+    if (busy || pass.trim().isEmpty()) return;
+    busy = true; screen.setBusy (true);
     juce::Component::SafePointer<Login> safe (this);
     juce::Thread::launch ([safe, pass, rem]
     {
         const auto m = AccessManager::matchPassword (pass);      // PBKDF2: fora da thread de mensagens
-        piradex::pcc::Check online;                               // chave de licença: pergunta ao PCC
+        piradex::pcc::Check online;                               // chave de licenca: pergunta ao PCC
         if (m.index < 0 && ! m.expired) online = AccessManager::checkOnline (pass);
         juce::MessageManager::callAsync ([safe, m, rem, online]
         {
             if (safe == nullptr) return;
             const auto res = online.outcome != piradex::pcc::Outcome::Disabled ? AccessManager::get().applyOnline (online, rem)
                                                                                : AccessManager::get().applyLogin (m, rem);
-            safe->busy = false; safe->enter.setEnabled (true);
-            safe->msg.setColour (juce::Label::textColourId, juce::Colour (0xffff6b7a));
-            if (res == AccessManager::LoginResult::Ok) { safe->pw.clear(); safe->msg.setText ({}, juce::dontSendNotification); if (safe->onOk) safe->onOk(); }
-            else if (res == AccessManager::LoginResult::Online) safe->msg.setText (AccessManager::get().onlineText(), juce::dontSendNotification);
-            else if (res == AccessManager::LoginResult::Expired) safe->msg.setText (juce::CharPointer_UTF8 ("Esta senha beta j\xC3\xA1 expirou."), juce::dontSendNotification);
-            else safe->msg.setText ("Senha incorreta.", juce::dontSendNotification);
+            safe->busy = false; safe->screen.setBusy (false);
+            if (res == AccessManager::LoginResult::Ok) { safe->screen.clearField(); safe->screen.setStatus ({}, false); if (safe->onOk) safe->onOk(); }
+            else if (res == AccessManager::LoginResult::Online) safe->screen.setStatus (AccessManager::get().onlineText(), true);
+            else if (res == AccessManager::LoginResult::Expired) safe->screen.setStatus (TR ("Esta senha beta j\xC3\xA1 expirou."), true);
+            else safe->screen.setStatus (TR ("Senha incorreta."), true);
         });
     });
 }
@@ -620,9 +592,11 @@ LoudnexEditor::LoudnexEditor (LoudnexProcessor& p)
     skinBtn.onClick = [this] { lightSkin() = ! lightSkin(); applySkin(); };
     logoutBtn.onClick = [this] { AccessManager::get().logout(); timerCallback(); };
     advSeg.setSelected (0); pageSeg.setSelected (0);
+    gear.showWelcome = [this] { showWelcome(); };
+    langBind.onChange = [this] { content.repaint(); repaint(); for (auto* c : everything) c->repaint(); };
 
     for (auto* c : std::initializer_list<juce::Component*> {
-             &modeSeg, &pageSeg, &advSeg, &slotBtn[0], &slotBtn[1], &slotBtn[2], &slotBtn[3], &saveBtn, &undoBtn, &redoBtn, &skinBtn, &logoutBtn,
+             &modeSeg, &pageSeg, &advSeg, &slotBtn[0], &slotBtn[1], &slotBtn[2], &slotBtn[3], &saveBtn, &undoBtn, &redoBtn, &skinBtn, &gear, &logoutBtn,
              &gain, &ceiling, &release, &lookahead, &punch, &mix, &knee, &cexp, &bias, &postgain, &bassamt, &rlink, &link, &bassfreq, &clippos, &clipneg,
              &transel, &dualoff, &xo1, &xo2, &mbg1, &mbg2, &mbg3, &tp, &bass, &gainmatch, &ceilock, &dual, &dcblock, &mb, &delta, &ms, &hq,
              &character, &relmode, &spectral, &distguard, &shape, &os, &alias, &hchar, &route, &deltasel, &target, &ratio, &balance, &assist,
@@ -640,6 +614,7 @@ LoudnexEditor::LoudnexEditor (LoudnexProcessor& p)
     setSize (1280, 820);
     startTimerHz (30);
     timerCallback();
+    if (piradex::kit::Welcome::shouldShow ("labloud", LX_VERSION_STRING)) showWelcome();   // 1.0.2: 3 primeiras aberturas de cada versao
 }
 
 LoudnexEditor::~LoudnexEditor() { stopTimer(); setLookAndFeel (nullptr); }
@@ -649,6 +624,7 @@ void LoudnexEditor::applySkin()
     look.refresh();
     sendLookAndFeelChange();
     skinBtn.setButtonText (lxui::lightSkin() ? "Skin: Clara" : "Skin: Escura");
+    gear.colour = cMu(); gear.hoverColour = cTx();
     login.toFront (false);
     content.repaint(); repaint();
     for (auto* c : everything) c->repaint();
@@ -686,7 +662,7 @@ void LoudnexEditor::layoutAll()
     // ---- cabeçalho
     put (modeSeg, 236, 14, 262, 36);
     put (saveBtn, 538, 15, 70, 34); for (int i = 0; i < 4; ++i) put (slotBtn[i], 616 + i * 38, 15, 34, 34);
-    put (undoBtn, 772, 15, 64, 34); put (redoBtn, 844, 15, 64, 34); put (advSeg, 916, 14, 164, 36); put (skinBtn, 1088, 15, 104, 34); put (logoutBtn, 1200, 15, 56, 34);
+    put (undoBtn, 772, 15, 64, 34); put (redoBtn, 844, 15, 64, 34); put (advSeg, 916, 14, 164, 36); put (skinBtn, 1088, 15, 96, 34); put (gear, 1190, 17, 30, 30); put (logoutBtn, 1226, 15, 46, 34);
     put (pageSeg, 24, 68, 560, 34);
     for (int i = 0; i < 4; ++i) { slotBtn[i].getProperties().set ("used", proc.slotUsed (i)); slotBtn[i].setToggleState (i == slotSel, juce::dontSendNotification); slotBtn[i].repaint(); }
 
@@ -702,7 +678,7 @@ void LoudnexEditor::layoutAll()
             card (X0, y, CW, dispH); grView.acc = 0; put (grView, X0 + 12, y + 10, CW - 24, dispH - 20); y += dispH + 16;
             if (adv)
             {
-                card (X0, y, CW, advH, T8 ("Avançado · limiter"));
+                card (X0, y, CW, advH, TR ("Avançado · limiter"));
                 put (relmode, X0 + 16, y + 30, 250, 34); put (spectral, X0 + 282, y + 30, 290, 34); put (distguard, X0 + 588, y + 30, 300, 34);
                 knobs ({ &bassamt, &rlink, &link, &bassfreq }, X0, y + 72, CW, 112, 112);
                 y += advH + 16;
@@ -718,8 +694,8 @@ void LoudnexEditor::layoutAll()
             const int advH = adv ? 138 : 0;
             const int topH = H - (adv ? advH + 16 : 0) - 150 - 16 - 40 - 16 - 40 - 16;
             int y = Y0;
-            card (X0, y, 520, topH, T8 ("Curva de transferência")); put (curve, X0 + 10, y + 28, 500, topH - 38);
-            card (X0 + 536, y, CW - 536, topH, T8 ("Harmónicos · 1 kHz, -6 dBFS")); put (harm, X0 + 546, y + 26, CW - 556, topH - 36);
+            card (X0, y, 520, topH, TR ("Curva de transferência")); put (curve, X0 + 10, y + 28, 500, topH - 38);
+            card (X0 + 536, y, CW - 536, topH, TR ("Harmónicos · 1 kHz, -6 dBFS")); put (harm, X0 + 546, y + 26, CW - 556, topH - 36);
             y += topH + 16;
             if (adv) { card (X0, y, CW, advH); knobs ({ &clippos, &clipneg, &transel, &dualoff, &mix }, X0, y + 4, CW, 112, 130); y += advH + 16; }
             card (X0, y, CW, 150); knobs ({ &gain, &ceiling, &knee, &cexp, &bias, &postgain }, X0, y + 10, CW, 118, 132); y += 166;
@@ -745,7 +721,7 @@ void LoudnexEditor::layoutAll()
     else if (page == 1)
     {
         card (RX, Y0, RW, H); put (meterView, RX, Y0, RW, H); meterView.mode = 1;
-        card (X0, Y0, CW, 320, T8 ("Espectro da saída · 3 bandas")); put (spectrum, X0 + 12, Y0 + 28, CW - 24, 284);
+        card (X0, Y0, CW, 320, TR ("Espectro da saída · 3 bandas")); put (spectrum, X0 + 12, Y0 + 28, CW - 24, 284);
         const int bw = (CW - 32) / 3, y = Y0 + 336;
         K* mk[3] = { &mbg1, &mbg2, &mbg3 };
         
@@ -774,7 +750,30 @@ void LoudnexEditor::layoutAll()
         labels.push_back ({ { RX + 16, Y0 + 448 + 34, RW - 32, H - 448 - 44 }, "@slots" });
     }
     login.toFront (false);
+    if (welcome != nullptr) { welcome->setBounds (0, 0, 1280, 820); welcome->toFront (false); }
     content.repaint(); repaint();
+}
+
+void LoudnexEditor::showWelcome()
+{
+    using W = piradex::kit::WelcomeItem;
+    welcome = std::make_unique<piradex::kit::Welcome> ("LABLOUD", juce::Colour (0xffffb224), LX_VERSION_STRING, std::vector<W> {
+        W { "Limiter, Clipper ou Hybrid", "Limiter, Clipper or Hybrid",
+            "Escolha o modo no topo. Hybrid divide o trabalho entre clipper e limiter: mais Clipper = mais corte antes do limiter.",
+            "Pick the mode at the top. Hybrid shares the work between clipper and limiter: more Clipper = more cutting before the limiter." },
+        W { "Auto-Dose", "Auto-Dose",
+            "Toque o \xc3\xa1udio e carregue em Auto-Dose: ouve 8 s e sugere ganho, release e lookahead para o alvo LUFS.",
+            "Play the audio and press Auto-Dose: it listens for 8 s and suggests gain, release and lookahead for the LUFS target." },
+        W { "Comparar e ouvir", "Compare and listen",
+            "Slots A B C D guardam afina\xc3\xa7\xc3\xb5" "es; Delta ouve s\xc3\xb3 o que o plugin removeu; Gain Match iguala a loudness.",
+            "Slots A B C D store settings; Delta hears only what the plugin removed; Gain Match evens out the loudness." },
+        W { "Novo na 1.0.2", "New in 1.0.2",
+            "Interface em PT / EN / ZH (roda dentada), ecr\xc3\xa3 de login Piradex unificado, menos CPU em sil\xc3\xaancio e Lookahead fora da automa\xc3\xa7\xc3\xa3o.",
+            "Interface in PT / EN / ZH (gear menu), the unified Piradex login screen, less CPU in silence and Lookahead kept out of automation." } });
+    welcome->onClose = [safe = juce::Component::SafePointer<LoudnexEditor> (this)] { if (safe != nullptr) juce::MessageManager::callAsync ([safe] { if (safe != nullptr) safe->welcome.reset(); }); };
+    content.addAndMakeVisible (*welcome);
+    welcome->setBounds (0, 0, 1280, 820);
+    welcome->toFront (true);
 }
 
 void LoudnexEditor::timerCallback()
@@ -819,7 +818,10 @@ void LoudnexEditor::paint (juce::Graphics& g)
     // texto do lado direito da linha de páginas
     const double lat = proc.reportedLatency() * 1000.0 / std::max (1.0, proc.currentSampleRate());
     g.setColour (cMu()); g.setFont (fontOf (11.f, true));
-    g.drawText (AccessManager::get().roleText() + T8 ("   ·   ") + T8 ("Latência ") + juce::String (lat, 2) + T8 (" ms   ·   v") + LX_VERSION_STRING, 600, 68, 656, 34, juce::Justification::centredRight);
+    auto role = AccessManager::get().roleText();
+    if (! piradex::i18n::isPortuguese())
+        role = role.replace ("MESTRE", "MASTER").replace ("LICENCIADO", "LICENSED").replace (juce::String::fromUTF8 ("LICEN\xC3\x87" "A \xC2\xB7 at\xC3\xA9 "), juce::String::fromUTF8 ("LICENCE \xC2\xB7 until "));
+    g.drawText (role + TR ("   ·   ") + TR ("Latência ") + juce::String (lat, 2) + TR (" ms   ·   v") + LX_VERSION_STRING, 600, 68, 656, 34, juce::Justification::centredRight);
 
     for (auto& l : labels)
     {
@@ -829,22 +831,22 @@ void LoudnexEditor::paint (juce::Graphics& g)
         {
             const double rt = R (proc, ids::ratio) * 0.01, ce = R (proc, ids::ceiling);
             if (juce::roundToInt (R (proc, ids::route)) == 0)
-                t = "Clip>Limit: o clipper corta a Teto + (1 - r) x 6 dB = " + juce::String (ce + (1.0 - rt) * 6.0, 1) + " dBFS e o limiter fecha em " + juce::String (ce, 1) + " dBFS.";
+                t = TR ("Clip>Limit: o clipper corta a Teto + (1 - r) x 6 dB = ") + juce::String (ce + (1.0 - rt) * 6.0, 1) + TR (" dBFS e o limiter fecha em ") + juce::String (ce, 1) + " dBFS.";
             else
-                t = "Limit>Clip: o limiter fecha a Teto + r x 3 dB = " + juce::String (ce + rt * 3.0, 1) + " dBFS; o clipper termina em " + juce::String (ce, 1) + " dBFS, seguido da barreira de pico.";
-            t += T8 ("  Mais Clipper = mais corte antes do limiter.");
+                t = TR ("Limit>Clip: o limiter fecha a Teto + r x 3 dB = ") + juce::String (ce + rt * 3.0, 1) + TR (" dBFS; o clipper termina em ") + juce::String (ce, 1) + TR (" dBFS, seguido da barreira de pico.");
+            t += TR ("  Mais Clipper = mais corte antes do limiter.");
         }
         else if (t == "@band")
-            t = T8 ("Aliasing medido num clip duro a 3 kHz (teste interno): 1× −44,5 dB · 4× −67,5 dB · 16× −69,7 dB. De 4× para 16× o ganho é só ~2 dB e o CPU quase triplica; reserve 16× e 32× para exportar.");
+            t = TR ("Aliasing medido num clip duro a 3 kHz (teste interno): 1× −44,5 dB · 4× −67,5 dB · 16× −69,7 dB. De 4× para 16× o ganho é só ~2 dB e o CPU quase triplica; reserve 16× e 32× para exportar.");
         else if (t == "@delta")
-            t = T8 ("Delta ouve só o que o plugin removeu (saída − entrada alinhada). Balance mexe em Punch, release, ratio e clip assist ao largar o botão.");
+            t = TR ("Delta ouve só o que o plugin removeu (saída − entrada alinhada). Balance mexe em Punch, release, ratio e clip assist ao largar o botão.");
         else if (t == "@system")
-            t = T8 ("Ceiling Lock: assistentes, slots e anular não mexem no teto. Gain Match: iguala a loudness da saída à da entrada. Mid/Side: barreira final de pico em L/R. HQ offline: 32× na exportação.");
+            t = TR ("Ceiling Lock: assistentes, slots e anular não mexem no teto. Gain Match: iguala a loudness da saída à da entrada. Mid/Side: barreira final de pico em L/R. HQ offline: 32× na exportação.");
         else if (t == "@target")
-            t = T8 ("ALVO LUFS");
+            t = TR ("ALVO LUFS");
         else if (t == "@slots")
         {
-            t = T8 ("Use os botões A B C D no cabeçalho: clique guarda num slot vazio e chama um slot guardado. Ative \"Guardar\" para sobrescrever. Um ponto no botão marca os slots em uso. Anular e Refazer percorrem as últimas alterações.");
+            t = TR ("Use os botões A B C D no cabeçalho: clique guarda num slot vazio e chama um slot guardado. Ative \"Guardar\" para sobrescrever. Um ponto no botão marca os slots em uso. Anular e Refazer percorrem as últimas alterações.");
         }
         g.drawFittedText (t, r, juce::Justification::topLeft, 4);
     }

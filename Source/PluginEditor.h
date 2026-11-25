@@ -4,6 +4,7 @@
 //  camadas Básico / Avançado. Todos os controlos estão ligados aos 48 parâmetros do processador.
 // =============================================================================
 #pragma once
+#include "i18n/PiradexKitUI.h"
 #include "PluginProcessor.h"
 #include <vector>
 
@@ -27,6 +28,9 @@ namespace lxui
     inline juce::Colour accent (int a) { return a == 0 ? cAm() : cCy(); }      // 0 = âmbar (limiter) · 1 = ciano (clipper)
     inline juce::Font fontOf (float h, bool bold = false) { return juce::Font (juce::FontOptions (h, bold ? juce::Font::bold : juce::Font::plain)); }
     inline juce::String T8 (const char* s) { return juce::String::fromUTF8 (s); }
+    // 1.0.2: PT no codigo; EN / ZH pela tabela ZhTable (chave = texto PT). Traduz no momento de pintar.
+    inline juce::String TR (const char* s) { return piradex::i18n::trPt (s); }
+    inline juce::String TRs (const juce::String& s) { return piradex::i18n::trPt (s.toRawUTF8()); }
 
     // cores fixas do ecrã de login
     constexpr juce::uint32 kBg = 0xff090b12, kPanel = 0xff12151f, kLine = 0xff262b3a, kText = 0xffe8ecf6, kDim = 0xff7b8398;
@@ -186,17 +190,19 @@ namespace lxui
         LoudnexProcessor& proc;
     };
 
+    // 1.0.2: ecra de login unico Piradex (kit partilhado)
     class Login : public juce::Component
     {
     public:
         explicit Login (std::function<void()> onSuccess);
-        void paint (juce::Graphics&) override;
-        void resized() override;
+        void resized() override { screen.setBounds (getLocalBounds()); }
+        void visibilityChanged() override { if (isVisible() && isShowing()) screen.focusField(); }
+        void mouseDown (const juce::MouseEvent&) override {}
     private:
-        void submit();
+        void submit (const juce::String& pass, bool rem);
         std::function<void()> onOk;
-        juce::TextEditor pw; juce::ToggleButton remember { "Lembrar neste computador" };
-        juce::TextButton enter { "ENTRAR" }; juce::Label msg; bool busy = false;
+        piradex::kit::LoginScreen screen { "LABLOUD", juce::Colour (0xffffb224), LX_VERSION_STRING };
+        bool busy = false;
     };
 }
 
@@ -223,6 +229,10 @@ private:
     // cabeçalho
     lxui::Seg modeSeg, pageSeg, advSeg;
     juce::TextButton slotBtn[4], saveBtn { "Guardar" }, undoBtn { "Anular" }, redoBtn { "Refazer" }, skinBtn { "Skin" }, logoutBtn { "Sair" };
+    piradex::kit::GearButton gear;                                   // 1.0.2: idioma, tema e tutorial
+    std::unique_ptr<piradex::kit::Welcome> welcome;
+    piradex::i18n::Binder langBind;
+    void showWelcome();
     bool saveMode = false; int slotSel = -1;
 
     // botões rotativos (um por parâmetro)
