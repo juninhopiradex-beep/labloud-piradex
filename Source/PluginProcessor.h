@@ -190,4 +190,5 @@ private:
     std::array<juce::ValueTree, 4> slots;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LoudnexProcessor)
+    int silentN = 0;   // 1.0.2: amostras seguidas de silencio a entrada
 };

@@ -412,7 +412,7 @@ void MeterView::paint (juce::Graphics& g)
     row ("LRA", juce::String (m.lra.load(), 1) + " LU", cTx());
     row (T8 ("Latência"), juce::String (lat, 2) + " ms", cTx());
     const int clamps = m.clamps.load();
-    row ("Barreira de pico", clamps == 0 ? juce::String ("sem intervencoes") : juce::String (clamps) + " intervencoes", clamps == 0 ? cOk() : cBad());
+    row ("Barreira de pico", clamps == 0 ? juce::String::fromUTF8 ("sem interven\xc3\xa7\xc3\xb5es") : juce::String (clamps) + juce::String::fromUTF8 (" interven\xc3\xa7\xc3\xb5es"), clamps == 0 ? cOk() : cBad());
     if (mode != 0)
     {
         y += 8; caption (g, "Clipper", { 16, y, 200, 16 }); y += 22;

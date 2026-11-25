@@ -26,7 +26,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout LoudnexProcessor::createLayo
     F (ids::ceiling, "Teto", -12.f, 0.f, 0.01f, -1.f, "dB", 1.f, 1);
     F (ids::mix, "Mix", 0.f, 100.f, 0.1f, 100.f, "%", 1.f, 1);
     F (ids::release, "Release", 0.1f, 1000.f, 0.01f, 60.f, "ms", 0.3f, 1);
-    F (ids::lookahead, "Lookahead", 0.2f, (float) kMaxLookaheadMs, 0.01f, 1.5f, "ms", 1.f, 1);
+    // 1.0.2: Lookahead fora da automacao (mudar o lookahead a tocar mexe na linha de atraso e da um clique)
+    l.add (std::make_unique<AudioParameterFloat> (ParameterID { ids::lookahead, 1 }, "Lookahead", NormalisableRange<float> (0.2f, (float) kMaxLookaheadMs, 0.01f, 1.f), 1.5f,
+                                                  AudioParameterFloatAttributes().withLabel ("ms").withAutomatable (false)));
     F (ids::assist, "Clip Assist", 0.f, 100.f, 0.1f, 0.f, "%", 1.f, 1);
     C (ids::character, "Carater", { "Clean", "Punch", "Loud" }, 0, 1);
     F (ids::link, "Stereo Link", 0.f, 100.f, 0.1f, 100.f, "%", 1.f, 1);
@@ -320,6 +322,15 @@ void LoudnexProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Mid
         applyDelay (buffer, n, targetLatency);
         meters.grDb.store (0.f); lastMode = -1;
         meters.outPeakDb.store (toDbf (buffer.getMagnitude (0, n)));
+        return;
+    }
+
+    // 1.0.2: entrada em silencio ha mais de (latencia + 1 s): a cauda ja saiu toda -> nao processa (poupa CPU em sessoes grandes)
+    silentN = inPk < 1.0e-7f ? std::min (silentN + n, 1 << 30) : 0;
+    if (! isNonRealtime() && silentN > targetLatency + (int) sr)
+    {
+        buffer.clear();
+        meters.grDb.store (0.f); meters.outPeakDb.store (-120.f);
         return;
     }
 

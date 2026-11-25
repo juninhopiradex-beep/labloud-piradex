@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  VERSAO: "1.0.1"
+  VERSAO: "1.0.2"
   NOME: "LABLOUD by Piradex"
 
 jobs:
@@ -37,7 +37,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: pkgbuild sem verificacao de versao (a 1.0.1 instala por cima de versoes com numero maior)
+      - name: pkgbuild sem verificacao de versao (a 1.0.2 instala por cima de versoes com numero maior)
         working-directory: ${{ github.workspace }}
         run: chmod +x ci/pkgbuild && echo "${{ github.workspace }}/ci" >> "$GITHUB_PATH"
       - name: Escolher um Xcode que ainda gera binarios para macOS 10.13 (o Xcode 26 sobe o minimo para 11.0)
@@ -277,4 +277,4 @@ jobs:
           gh release delete "$TAG" -y --cleanup-tag -R "$GITHUB_REPOSITORY" || true
           gh release create "$TAG" dist/*.dmg dist/*.pkg dist/*.zip dist/*.exe -R "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" --title "$NOME $VERSAO" \
-            --notes "Versao 1.0.1: login obrigatorio desde ja (senha master, senha beta valida ate 31/12/2026 ou chave de licenca validada online pelo PCC). Limiter + Clipper + Hybrid. Novo na $VERSAO: chaves de licença validadas online (PCC); a master e as senhas beta continuam a funcionar como antes. macOS 10.13+ (um só instalador para Macs Intel antigos e Apple Silicon, VST3 + AU): LABLOUD-by-Piradex-$VERSAO-macOS.dmg · Windows 10/11 64 bits (VST3): LABLOUD-by-Piradex-$VERSAO-Windows-Setup.exe (ou o .zip para instalação manual)."
+            --notes "Versao 1.0.2: login obrigatorio desde ja (senha master, senha beta valida ate 31/12/2026 ou chave de licenca validada online pelo PCC). Limiter + Clipper + Hybrid. Novo na $VERSAO: chaves de licença validadas online (PCC); a master e as senhas beta continuam a funcionar como antes. macOS 10.13+ (um só instalador para Macs Intel antigos e Apple Silicon, VST3 + AU): LABLOUD-by-Piradex-$VERSAO-macOS.dmg · Windows 10/11 64 bits (VST3): LABLOUD-by-Piradex-$VERSAO-Windows-Setup.exe (ou o .zip para instalação manual)."
